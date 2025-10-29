@@ -49,8 +49,8 @@ model Review {
   rating    Float?
   content   String
   isManual  Boolean  @default(false)
-  avatarUrl String?
   productId String
+  avatarUrl String?
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
