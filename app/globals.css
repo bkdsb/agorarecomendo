@@ -1,26 +1,91 @@
-@import "tailwindcss";
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+/* Definindo nossas cores base para modo light e dark */
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Cores do Modo Light (Corrigido) */
+    --background: 0 0% 95%; /* #F2F2F2 Branco Gelo */
+    --foreground: 239 6% 6%; /* #0C0C0D Preto Espacial */
+    /* Card no modo light é branco puro */
+    --card: 0 0% 100%;
+    --card-foreground: 239 6% 6%;
+
+    /* Suporte a tokens utilitários usados no projeto */
+    --border: 0 0% 80%; /* borda suave no light */
+    --muted: 0 0% 96%; /* fundo sutil */
+    --muted-foreground: 239 6% 35%; /* texto atenuado */
+    /* Acento Apple-like (iOS Blue #0A84FF aprox) */
+    --accent: 211 100% 53%;
+  }
+
+  .dark {
+    /* Cores do Modo Dark (Corrigido) */
+    --background: 239 6% 6%; /* #0C0C0D Preto Espacial */
+    --foreground: 0 0% 95%; /* #F2F2F2 Branco Gelo */
+    
+    /* A GRANDE MUDANÇA ESTÁ AQUI:
+      Em vez de um cinza sólido, usamos um branco com 5% de opacidade.
+      Isso cria o efeito "glassmorphism" e dá contraste.
+    */
+    --card: 0 0% 100% / 0.05; /* Branco 5% */
+    --card-foreground: 0 0% 95%;
+
+    /* Tokens auxiliares no dark */
+    --border: 0 0% 100% / 0.12; /* borda levemente visível */
+    --muted: 0 0% 100% / 0.06; /* fundo sutil translúcido */
+    --muted-foreground: 0 0% 85%; /* texto atenuado no dark */
+    /* Acento no dark (ligeiramente menos vibrante) */
+    --accent: 212 100% 60%;
   }
 }
 
+/* Aplicando as cores base */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
 }
+
+/* TipTap: ajustes de editor */
+.ProseMirror {
+  outline: none;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+
+/* Fallback para títulos dentro do editor, caso a classe `prose` seja neutralizada por algum reset */
+.ProseMirror h1 { font-weight: 700; font-size: 2.25rem; line-height: 2.5rem; margin: 1.25em 0 .5em; }
+.ProseMirror h2 { font-weight: 700; font-size: 1.875rem; line-height: 2.25rem; margin: 1.2em 0 .5em; }
+.ProseMirror h3 { font-weight: 600; font-size: 1.5rem; line-height: 2rem; margin: 1.1em 0 .5em; }
+.ProseMirror h4 { font-weight: 600; font-size: 1.25rem; line-height: 1.75rem; margin: 1em 0 .5em; }
+.ProseMirror h5 { font-weight: 600; font-size: 1.125rem; line-height: 1.75rem; margin: .9em 0 .5em; }
+.ProseMirror h6 { font-weight: 600; font-size: 1rem; line-height: 1.5rem; margin: .8em 0 .5em; text-transform: uppercase; letter-spacing: .02em; }
+.ProseMirror p { margin: .75em 0; }
+.ProseMirror ul { list-style: disc; padding-left: 1.25rem; margin: .75em 0; }
+.ProseMirror ol { list-style: decimal; padding-left: 1.25rem; margin: .75em 0; }
+.ProseMirror blockquote { border-left: 4px solid hsl(var(--border)); padding-left: 1rem; color: hsl(var(--muted-foreground)); margin: 1em 0; }
+
+/* Fallback similar para o artigo público caso a classe `prose` não injete estilos */
+article.prose h1 { font-weight: 700; font-size: 2.25rem; line-height: 2.5rem; margin: 1.25em 0 .5em; }
+article.prose h2 { font-weight: 700; font-size: 1.875rem; line-height: 2.25rem; margin: 1.2em 0 .5em; }
+article.prose h3 { font-weight: 600; font-size: 1.5rem; line-height: 2rem; margin: 1.1em 0 .5em; }
+article.prose h4 { font-weight: 600; font-size: 1.25rem; line-height: 1.75rem; margin: 1em 0 .5em; }
+article.prose h5 { font-weight: 600; font-size: 1.125rem; line-height: 1.75rem; margin: .9em 0 .5em; }
+article.prose h6 { font-weight: 600; font-size: 1rem; line-height: 1.5rem; margin: .8em 0 .5em; text-transform: uppercase; letter-spacing: .02em; }
+article.prose p { margin: .9em 0; }
+article.prose ul { list-style: disc; padding-left: 1.25rem; margin: .75em 0; }
+article.prose ol { list-style: decimal; padding-left: 1.25rem; margin: .75em 0; }
+article.prose blockquote { border-left: 4px solid hsl(var(--border)); padding-left: 1rem; color: hsl(var(--muted-foreground)); margin: 1em 0; }
+
+/* Utilitários visuais suaves (mantidos via classes utilitárias diretamente nos componentes) */
+

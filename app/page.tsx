@@ -1,65 +1,145 @@
-import Image from "next/image";
+// 1. Importamos o prisma (nosso cliente)
+import prisma from '@/lib/prisma';
 
-export default function Home() {
+// Importamos nossos componentes de cliente
+import Header from '../components/Header';
+import ContentFilters from '../components/ContentFilters';
+import ProductCard from '../components/ProductCard';
+
+// Importamos o ícone para o Banner
+import { ArrowRight } from 'lucide-react';
+
+// Garantimos que a página seja revalidada a cada 0 segundos (atualização imediata)
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
+// 2. Transformamos a Home em uma função "async"
+export default async function Home() {
+
+  // 3. BUSCA DE DADOS REAIS (COM O NOME CORRIGIDO)
+  const products = await prisma.product.findMany({
+    take: 12,
+    orderBy: {
+      createdAt: 'desc',
+    },
+    include: {
+      category: true,
+      // CORRIGIDO: O nome da relação é 'links', como no schema.prisma
+      links: true,
+    },
+  });
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* --- HEADER --- */}
+      <Header />
+
+      <main className="flex-1">
+        {/* --- HERO SECTION (COM ANIMAÇÃO DE VOLTA) --- */}
+        <section className="relative w-full py-24 md:py-32 lg:py-40 overflow-hidden">
+          {/* Fundo com gradiente e blur mais sutil + parallax */}
+          <div className="absolute inset-0 z-[-1] bg-gradient-to-b from-background to-transparent" />
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute top-[15%] left-[8%] w-[45vw] h-[45vw] rounded-full bg-blue-500/12 blur-3xl" />
+            <div className="absolute bottom-[10%] right-[10%] w-[40vw] h-[40vw] rounded-full bg-purple-500/12 blur-3xl" />
+          </div>
+          
+          <div className="container relative z-10 mx-auto max-w-7xl px-4 md:px-6 text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter text-foreground">
+              As melhores recomendações.
+            </h1>
+            <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-foreground/70">
+              Selecionadas com cuidado — só o que vale seu tempo.
+            </p>
             <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="#recentes"
+              className="mt-8 inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-colors hover:opacity-90 shadow-sm"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
+              Ver recomendações recentes
+            </a>
+          </div>
+        </section>
+
+        {/* --- BANNER DE DIVULGAÇÃO (TOPO) --- */}
+        <section className="container mx-auto max-w-7xl px-4 md:px-6">
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden rounded-2xl border border-border bg-card/70 backdrop-blur p-8 md:p-12 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.3)]">
+            <div className="z-10 text-center md:text-left">
+              <h2 className="text-3xl font-bold text-foreground">
+                Oferta Especial
+              </h2>
+              <p className="mt-2 text-lg text-foreground/70">
+                Os melhores mouses ergonômicos com 20% OFF.
+              </p>
+            </div>
             <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="#"
+              className="z-10 inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-foreground px-6 py-3 font-medium text-background transition-opacity hover:opacity-90"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+              Conferir Agora
+              <ArrowRight className="w-4 h-4" />
+            </a>
+            {/* layers decorativos */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-blue-400/10 blur-2xl" />
+              <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-purple-400/10 blur-2xl" />
+            </div>
+          </div>
+        </section>
+
+        {/* --- SEÇÃO DE FILTROS --- */}
+        <ContentFilters />
+
+        {/* --- GRADE DE PRODUTOS --- */}
+        <section id="recentes" className="container mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-16">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            
+            {/* --- LOOP DE DADOS REAIS (COM O NOME CORRIGIDO) --- */}
+            {products.map((product) => {
+              // Preferimos link BR, depois qualquer outro
+              const preferred = product.links?.find((l: any) => l.locale === 'pt-br') || product.links?.[0];
+              const affiliateUrl = (preferred?.url && preferred.url.trim().length > 0) ? preferred.url : '#';
+              return (
+                <ProductCard
+                  key={product.id}
+                  title={product.title}
+                  description={product.summary || 'Sem resumo rápido.'}
+                  category={product.category?.name || 'Sem Categoria'}
+                  imageUrl={product.imageUrl || 'https://placehold.co/600x400/1C1C1E/F2F2F2?text=Produto'}
+                  articleLink={`/produto/${product.slug}`}
+                  affiliateLink={affiliateUrl}
+                />
+              );
+            })}
+
+            {/* Mensagem se não houver produtos */}
+            {products.length === 0 && (
+              <p className="col-span-full text-center text-foreground/70">
+                Nenhum produto encontrado. Comece a adicionar produtos no seu painel de admin!
+              </p>
+            )}
+
+          </div>
+        </section>
       </main>
+
+      {/* --- FOOTER --- */}
+  <footer className="w-full border-t border-border mt-16">
+        <div className="container mx-auto max-w-7xl px-4 md:px-6 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <span className="text-sm text-foreground/70">
+              © {new Date().getFullYear()} AgoraRecomendo. Todos os direitos reservados.
+            </span>
+            <div className="flex gap-4">
+              <a href="#" className="text-sm text-foreground/70 hover:text-foreground">
+                Política de Privacidade
+              </a>
+              <a href="#" className="text-sm text-foreground/70 hover:text-foreground">
+                Contato
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

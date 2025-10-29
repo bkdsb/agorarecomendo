@@ -1,0 +1,20 @@
+import type { NextConfig } from 'next';
+
+const config: NextConfig = {
+  reactStrictMode: true,
+  // Adicionamos esta seção para autorizar domínios de imagens
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
+      },
+      // No futuro, podemos adicionar aqui os domínios das lojas
+      // ex: 'm.media-amazon.com'
+    ],
+  },
+};
+
+export default config;
