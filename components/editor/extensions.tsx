@@ -28,17 +28,8 @@ import { common, createLowlight } from "lowlight";
 
 //TODO I am using cx here to get tailwind autocomplete working, idk if someone else can write a regex to just capture the class key in objects
 const aiHighlight = AIHighlight;
-// Placeholder configurado para evitar duplicações em nós filhos (ex.: task items)
-// e limitar a exibição apenas quando o editor estiver editável.
-const placeholder = Placeholder.configure({
-  includeChildren: false,
-  showOnlyWhenEditable: true,
-  placeholder: ({ node }) => {
-    // Mostra texto apenas em parágrafos vazios do nível atual
-    if (node.type.name === "paragraph") return "Press '/' for commands";
-    return "";
-  },
-});
+// Placeholder do Novel: sem configuração (usa padrão)
+const placeholder = Placeholder;
 const tiptapLink = TiptapLink.configure({
   HTMLAttributes: {
     class: cx(

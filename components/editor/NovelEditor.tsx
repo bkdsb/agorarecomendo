@@ -14,7 +14,7 @@ import {
   handleImageDrop,
   handleImagePaste,
 } from "novel";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { defaultExtensions } from "./extensions";
 import { ColorSelector } from "./selectors/ColorSelector";
@@ -31,7 +31,6 @@ import { slashCommand, suggestionItems } from "./slash-command";
 
 const hljs = require("highlight.js");
 
-// Merge extensions with slashCommand
 const extensions = [...defaultExtensions, slashCommand];
 
 interface NovelEditorProps {
@@ -58,7 +57,6 @@ export default function NovelEditor({
   >("Saved");
   const saveStatus = controlledSaveStatus ?? internalSaveStatus;
   const [charsCount, setCharsCount] = useState<number>();
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
@@ -90,92 +88,29 @@ export default function NovelEditor({
     return `${num} ${label}`;
   };
 
-  // Keep global drag handle aligned with editor content (Novel template approach)
-  useEffect(() => {
-    const update = () => {
-      const root = containerRef.current;
-      if (!root) return;
-      
-      // Query the ProseMirror editor element directly (as per Novel tutorial)
-      const prosemirror = root.querySelector('.ProseMirror') as HTMLElement | null;
-      if (!prosemirror) return;
-      
-      // Get bounding rect of the ProseMirror content area
-      const rect = prosemirror.getBoundingClientRect();
-      
-      // Position the drag handle ~28px to the left of the content start
-      // (matching Novel's default offset for the handle icon width + gap)
-      const left = Math.max(8, rect.left - 28);
-      
-      // Update CSS variable for drag handle positioning
-      document.documentElement.style.setProperty('--drag-handle-left', `${Math.round(left)}px`);
-    };
-    
-    // Initial update
-    update();
-    
-    // Update on window resize
-    window.addEventListener('resize', update);
-    
-    // Update on container size changes
-    const ro = new ResizeObserver(update);
-    if (containerRef.current) ro.observe(containerRef.current);
-    
-    return () => {
-      window.removeEventListener('resize', update);
-      ro.disconnect();
-    };
-  }, []);
-
   return (
-    <div ref={containerRef} className="relative w-full max-w-screen-lg">
-      {/* Topo esquerdo (ex.: bandeira/idioma) */}
+    <div className="relative w-full max-w-screen-lg">
+      <div className="flex absolute right-5 top-5 z-10 mb-5 gap-2">
+        <div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">
+          {saveStatus}
+        </div>
+        {typeof charsCount === "number" && (
+          <div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">
+            {formatWords(charsCount)}
+          </div>
+        )}
+        {actionArea}
+      </div>
       {leftOverlay && (
         <div className="absolute left-5 top-5 z-10 flex items-center gap-2.5">
           {leftOverlay}
         </div>
       )}
-      <div className="absolute right-5 top-5 z-10 flex items-center gap-2.5">
-        {/* Words badge */}
-        {typeof charsCount === "number" && (
-          <div className="rounded-full bg-background/80 px-3 py-1.5 text-xs text-foreground/60 shadow-[0_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-xl border border-black/5 dark:border-white/10 supports-[backdrop-filter]:bg-background/60 font-medium">
-            {formatWords(charsCount)}
-          </div>
-        )}
-        {actionArea}
-        {/* Save badge - agora na última posição */}
-        <div
-          className="flex items-center gap-2 rounded-full bg-background/80 px-3 py-1.5 text-xs text-foreground/70 shadow-[0_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-xl border border-black/5 dark:border-white/10 supports-[backdrop-filter]:bg-background/60"
-          role="status"
-          aria-live="polite"
-        >
-          <span
-            className={
-              saveStatus === "Saved"
-                ? "h-1.5 w-1.5 rounded-full bg-emerald-500"
-                : saveStatus === "Saving"
-                ? "h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"
-                : saveStatus === "Error"
-                ? "h-1.5 w-1.5 rounded-full bg-rose-500"
-                : "h-1.5 w-1.5 rounded-full bg-amber-500"
-            }
-          />
-          <span className="tracking-wide select-none font-medium">
-            {saveStatus === 'Saved'
-              ? (t('common.saved') || 'Saved')
-              : saveStatus === 'Saving'
-              ? (t('common.saving') || 'Saving…')
-              : saveStatus === 'Error'
-              ? (t('common.saveFailed') || 'Save failed')
-              : (t('common.unsaved') || 'Unsaved')}
-          </span>
-        </div>
-      </div>
       <EditorRoot>
         <EditorContent
           initialContent={initialContent ?? undefined}
           extensions={extensions as any}
-          className="relative min-h-[500px] w-full max-w-screen-lg border-muted bg-background sm:mb-[calc(20vh)] sm:rounded-2xl sm:border sm:border-border/60 sm:shadow-[0_1px_2px_rgba(0,0,0,0.05),0_8px_30px_rgba(0,0,0,0.06)]"
+          className="relative min-h-[500px] w-full max-w-screen-lg border-muted bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:shadow-lg"
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),
@@ -183,12 +118,7 @@ export default function NovelEditor({
             handlePaste: (view, event) => handleImagePaste(view, event, uploadFn),
             handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved, uploadFn),
             attributes: {
-              class:
-                // Tipografia mais compacta e consistente no editor
-                "prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full prose-p:my-3 prose-p:leading-relaxed prose-headings:leading-tight prose-headings:mt-8 prose-headings:mb-3",
-              // Garantimos que o texto do placeholder esteja disponível via atributo
-              // para seletores CSS que usam attr(data-placeholder).
-              'data-placeholder': placeholder,
+              class: "prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full",
             },
           }}
           onUpdate={({ editor }) => {

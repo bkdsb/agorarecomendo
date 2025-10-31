@@ -18,15 +18,21 @@
 /* === ProseMirror Base Styles === */
 .ProseMirror {
   position: relative;
-}
-
-.ProseMirror {
   word-wrap: break-word;
   white-space: pre-wrap;
   white-space: break-spaces;
   -webkit-font-variant-ligatures: none;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0;
+  /* Padding do Novel tutorial: p-12 px-8 sm:px-12 */
+  padding: 3rem 2rem; /* 48px vertical, 32px horizontal */
+}
+
+@media (min-width: 640px) {
+  .ProseMirror {
+    padding-left: 3rem;  /* 48px */
+    padding-right: 3rem; /* 48px */
+  }
 }
 
 .ProseMirror [contenteditable="false"] {
@@ -201,6 +207,7 @@
 }
 
 /* === Placeholder (única regra) === */
+.ProseMirror .is-editor-empty:first-child::before,
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
@@ -233,8 +240,8 @@ img.ProseMirror-separator {
 }
 
 /* === Drag Handle (Global) === */
+/* Baseado no tutorial Novel - o plugin tiptap-extension-global-drag-handle posiciona automaticamente */
 .drag-handle {
-  /* Keep positioned relative to viewport but align with editor gutter */
   position: fixed;
   opacity: 1;
   transition: opacity ease-in 0.2s;
@@ -247,9 +254,6 @@ img.ProseMirror-separator {
   height: 1.5rem;
   z-index: 50;
   cursor: grab;
-  /* Align handle with the left gutter of the editor.
-    Primary: CSS var provided by NovelEditor. Fallback: clamp by container width. */
-  left: var(--drag-handle-left, clamp(12px, calc((100vw - 1024px) / 2 - 36px), 200px)) !important;
 }
 
 .drag-handle:hover {
