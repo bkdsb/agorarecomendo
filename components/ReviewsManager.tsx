@@ -127,12 +127,16 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                         <div key={review.id} className="p-3 bg-card rounded-md shadow-sm">
                             <div className="flex justify-between items-start gap-3">
                                 <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-foreground/10 overflow-hidden flex items-center justify-center">
-                                        {review.avatarUrl ? (
-                                            <img src={review.avatarUrl} alt={review.author} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <User className="w-4 h-4 text-foreground/60" />
-                                        )}
+                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-foreground/10 flex items-center justify-center">
+                                        <img
+                                          src={review.avatarUrl || '/avatar-reviews.jpeg'}
+                                          alt={review.author || 'avatar'}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            const t = e.target as HTMLImageElement;
+                                            if (!t.src.endsWith('/avatar-reviews.jpeg')) t.src = '/avatar-reviews.jpeg';
+                                          }}
+                                        />
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold text-foreground flex items-center gap-2">

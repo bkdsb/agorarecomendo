@@ -93,16 +93,18 @@ export default function NovelEditor({
   // Keep global drag handle aligned with editor gutter via CSS var
   useEffect(() => {
     const update = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      // 36px: approximate gutter offset from content to handle
-      const left = Math.max(12, rect.left - 36);
+      const root = containerRef.current;
+      if (!root) return;
+      const prose = root.querySelector('.ProseMirror') as HTMLElement | null;
+      const target = prose || root;
+      const rect = target.getBoundingClientRect();
+      // Offset the handle ~28px to the left of text content
+      const offset = 28;
+      const left = Math.max(8, rect.left - offset);
       document.documentElement.style.setProperty('--drag-handle-left', `${Math.round(left)}px`);
     };
     update();
     window.addEventListener('resize', update);
-    // Some layouts reflow on sidebar toggle/route changes
     const ro = new ResizeObserver(update);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => {
