@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 // 1. Importamos o ícone de seta
 import { ArrowUpRight } from 'lucide-react';
+import { useLanguage } from './LanguageProvider';
 
 // 2. Adicionamos os links nas Props
 interface ProductCardProps {
@@ -31,6 +32,9 @@ export default function ProductCard({
   imageScale = 1,
 }: ProductCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
+  const moreInfoLabel = t('product.moreInfo');
+  const viewProductLabel = t('product.viewProduct');
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = cardRef.current;
@@ -68,7 +72,7 @@ export default function ProductCard({
       <div className="relative w-full pt-[100%] overflow-hidden bg-foreground/5">
         <Image
           src={imageUrl}
-          alt={`Imagem do ${title}`}
+          alt={`${t('product.imageAltPrefix')} ${title}`}
           fill
           style={{ objectFit: imageFit, objectPosition: imagePosition, transform: `scale(${imageScale})`, transformOrigin: imagePosition }}
           className="transition-transform duration-300 group-hover:scale-105 will-change-transform"
@@ -91,7 +95,7 @@ export default function ProductCard({
                        transition-colors hover:bg-preto-espacial/5
                        dark:border-branco-gelo/20 dark:text-branco-gelo dark:hover:bg-branco-gelo/10"
           >
-            Mais Informações
+            {moreInfoLabel}
           </Link>
           {/* Botão 2: Ver Produto (linka para afiliado) */}
           <a
@@ -103,7 +107,7 @@ export default function ProductCard({
                        transition-colors hover:bg-preto-espacial/90
                        dark:bg-branco-gelo dark:text-preto-espacial dark:hover:bg-branco-gelo/90"
           >
-            Ver Produto
+            {viewProductLabel}
             <ArrowUpRight className="w-4 h-4" />
           </a>
         </div>

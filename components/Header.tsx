@@ -5,8 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X, Package, Settings } from 'lucide-react';
 import ThemeToggleButton from './ThemeToggleButton';
+import LanguageToggle from './LanguageToggle';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from './LanguageProvider';
 
 type HeaderProps = {
   /**
@@ -20,18 +22,19 @@ export default function Header({ editHref }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const { t } = useLanguage();
   
   const isAdmin = pathname?.startsWith('/admin-secret-xyz');
   
   const adminMenuItems = [
     {
-      href: '/admin-secret-xyz/produtos',
-      label: 'Produtos',
+      href: '/admin-secret-xyz/products',
+      label: t('admin.products'),
       icon: Package,
     },
     {
-      href: '/admin-secret-xyz/configuracoes',
-      label: 'Configurações',
+      href: '/admin-secret-xyz/settings',
+      label: t('admin.settings'),
       icon: Settings,
     },
   ];
@@ -51,17 +54,17 @@ export default function Header({ editHref }: HeaderProps) {
             {!isAdmin && (
               <>
                 <Link href="/" className="text-sm font-medium text-foreground/70 hover:text-foreground">
-                  Home
+                  {t('header.home')}
                 </Link>
                 <Link href="#" className="text-sm font-medium text-foreground/70 hover:text-foreground">
-                  Categorias
+                  {t('header.categories')}
                 </Link>
                 {status === 'authenticated' && editHref && (
                   <Link
                     href={editHref}
                     className="inline-flex items-center rounded-full bg-blue-600 text-white text-xs font-medium px-3 py-1.5 hover:bg-blue-700 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
                   >
-                    Editar artigo
+                    {t('header.editArticle')}
                   </Link>
                 )}
               </>
@@ -73,7 +76,7 @@ export default function Header({ editHref }: HeaderProps) {
                   href="/"
                   className="text-sm font-medium text-foreground/70 hover:text-foreground"
                 >
-                  Voltar ao Site
+                  {t('header.backToSite')}
                 </Link>
                 {adminMenuItems.map((item) => {
                   const Icon = item.icon;
@@ -98,7 +101,10 @@ export default function Header({ editHref }: HeaderProps) {
             )}
             
             {/* 3. Lógica de Login/Logout (Desktop) */}
-            <ThemeToggleButton />
+            <div className="flex items-center gap-3">
+              <LanguageToggle />
+              <ThemeToggleButton />
+            </div>
             {status === 'loading' && (
               <div className="w-8 h-8 rounded-full bg-card animate-pulse" />
             )}
@@ -109,14 +115,14 @@ export default function Header({ editHref }: HeaderProps) {
                     href="/admin-secret-xyz"
                     className="text-sm font-medium text-foreground/70 hover:text-foreground"
                   >
-                    Dashboard
+                    {t('header.dashboard')}
                   </Link>
                 )}
                 <button
                   onClick={() => signOut()}
                   className="text-sm font-medium text-foreground/70 hover:text-foreground"
                 >
-                  Logout
+                  {t('header.logout')}
                 </button>
                 <Image
                   src={session.user.image || '/globe.svg'}
@@ -132,6 +138,7 @@ export default function Header({ editHref }: HeaderProps) {
 
           {/* Botão Menu Mobile */}
           <div className="md:hidden flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggleButton />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -154,10 +161,10 @@ export default function Header({ editHref }: HeaderProps) {
           {!isAdmin && (
             <>
               <Link href="/" className="text-2xl font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>
-                Home
+                {t('header.home')}
               </Link>
               <Link href="#" className="text-2xl font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>
-                Categorias
+                {t('header.categories')}
               </Link>
               {status === 'authenticated' && editHref && (
                 <Link
@@ -165,7 +172,7 @@ export default function Header({ editHref }: HeaderProps) {
                   className="inline-flex items-center rounded-full bg-blue-600 text-white text-base font-medium px-4 py-2 hover:bg-blue-700 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Editar artigo
+                  {t('header.editArticle')}
                 </Link>
               )}
             </>
@@ -178,7 +185,7 @@ export default function Header({ editHref }: HeaderProps) {
                 className="text-2xl font-medium text-foreground"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Voltar ao Site
+                {t('header.backToSite')}
               </Link>
               {adminMenuItems.map((item) => {
                 const Icon = item.icon;
@@ -219,14 +226,14 @@ export default function Header({ editHref }: HeaderProps) {
                   className="text-2xl font-medium text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Dashboard
+                  {t('header.dashboard')}
                 </Link>
               )}
               <button
                 onClick={() => signOut()}
                 className="text-2xl font-medium text-foreground"
               >
-                Logout
+                {t('header.logout')}
               </button>
             </>
           )}

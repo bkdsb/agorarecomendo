@@ -10,7 +10,7 @@ const adminLinks = [
   { href: "/admin-secret-xyz", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin-secret-xyz/banners", label: "Banners", icon: ImageIcon },
   { href: "/admin-secret-xyz/produtos", label: "Produtos", icon: Package },
-  { href: "/admin-secret-xyz/configuracoes", label: "Configurações", icon: Settings },
+  { href: "/admin-secret-xyz/settings", label: "Configurações", icon: Settings },
 ];
 
 export default function AdminSidebarLayout({ children }: { children: React.ReactNode }) {

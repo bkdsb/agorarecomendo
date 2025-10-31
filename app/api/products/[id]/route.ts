@@ -68,8 +68,9 @@ export async function PATCH(
     }
 
   const body = await request.json();
-  const { title, summary, article, imageUrl, categoryId, tags, links, reviews, scrapedQnA } = body;
+  const { title, summary, article, imageUrl, categoryId, tags, links, reviews, scrapedQnA, titlePtBr, summaryPtBr, articlePtBr } = body;
   const safeArticle = typeof article === 'string' ? cleanHtml(article) : undefined;
+  const safeArticlePt = typeof articlePtBr === 'string' ? cleanHtml(articlePtBr) : undefined;
 
     // Atualiza slug se título mudar
     let slugUpdate: string | undefined = undefined;
@@ -94,12 +95,39 @@ export async function PATCH(
       await prisma.review.deleteMany({ where: { productId: params.id } });
     }
 
+    // Se reviews foi enviado, deduplicar dentro do payload para evitar persistir duplicadas
+    let dedupedReviews: any[] | undefined = undefined;
+    if (replaceReviews) {
+      const normalize = (s: string) => (s || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/["'`´’“”]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const keyOf = (r: any) => [
+        normalize(String(r?.author || 'anon')),
+        normalize(String(r?.content || '')),
+        String(Math.round((Number(r?.rating) || 0) * 10) / 10),
+      ].join(' | ');
+      const seen = new Set<string>();
+      dedupedReviews = (reviews || []).filter((r: any) => {
+        const k = keyOf(r);
+        if (!k || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }
+
     const product = await prisma.product.update({
       where: { id: params.id },
       data: {
         ...(title !== undefined ? { title } : {}),
         ...(summary !== undefined ? { summary } : {}),
-  ...(safeArticle !== undefined ? { article: safeArticle } : {}),
+        ...(titlePtBr !== undefined ? { titlePtBr } : {}),
+        ...(summaryPtBr !== undefined ? { summaryPtBr } : {}),
+        ...(safeArticle !== undefined ? { article: safeArticle } : {}),
+        ...(safeArticlePt !== undefined ? { articlePtBr: safeArticlePt } : {}),
         ...(imageUrl !== undefined ? { imageUrl } : {}),
         ...(categoryId !== undefined ? { categoryId: categoryId || null } : {}),
   ...(tags !== undefined ? { tags: tags || null } : {}),
@@ -126,7 +154,7 @@ export async function PATCH(
         ...(replaceReviews
           ? {
               reviews: {
-                create: (reviews || []).map((r: any) => ({
+                create: (dedupedReviews || []).map((r: any) => ({
                   author: r.author ?? null,
                   rating: typeof r.rating === 'number' ? r.rating : null,
                   content: r.content ?? '',

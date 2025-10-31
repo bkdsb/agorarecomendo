@@ -2,21 +2,23 @@
 
 import React, { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "./LanguageProvider";
 
 type Filter = { id: string; label: string };
 
 export default function ContentFilters() {
   const pathname = usePathname() || "";
   const isAdmin = pathname.startsWith("/admin-secret-xyz");
+  const { t } = useLanguage();
 
   const filters = useMemo<Filter[]>(
     () => [
-      { id: "popular", label: "🔥 Mais Vistos" },
-      { id: "price_desc", label: "💎 Mais Caros" },
-      { id: "price_asc", label: "💰 Mais Baratos" },
-      { id: "editor", label: "🧠 Escolha do Editor" },
+      { id: "popular", label: `🔥 ${t('filters.popular')}` },
+      { id: "price_desc", label: `💎 ${t('filters.expensive')}` },
+      { id: "price_asc", label: `💰 ${t('filters.cheapest')}` },
+      { id: "editor", label: `🧠 ${t('filters.editorsPick')}` },
     ],
-    []
+    [t]
   );
 
   const [activeFilter, setActiveFilter] = useState<string>(filters[0].id);

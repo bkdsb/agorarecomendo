@@ -23,7 +23,7 @@ Um site de reviews com visual Apple‑like e uma dashboard admin completa. Publi
 ### O que vem pronto
 
 - Site público de produto com hero, resumo, artigo completo e CTA “Ver na Loja”.
-- Seção “O que dizem os usuários” personalizável pelo admin, com os modos:
+- Seção “Reviews: O que dizem os usuários” personalizável pelo admin, com os modos:
 	- minimal (cartões centrados)
 	- grid (2 colunas)
 	- summary (média e contagem)
@@ -127,6 +127,8 @@ NEXTAUTH_URL="http://localhost:3000" # em produção a URL do seu domínio
 GOOGLE_CLIENT_ID="..."
 GOOGLE_CLIENT_SECRET="..."
 ADMIN_EMAILS="seuemail@gmail.com,outro@dominio.com"
+# Para auto-preencher dados ao colar link de produto (Amazon), use a Rainforest API:
+RAINFOREST_API_KEY="sua_chave_rainforest"
 ```
 
 No Google OAuth, defina o callback:
@@ -167,7 +169,7 @@ Abra `http://localhost:3000` e faça login em `/auth/signin` com um e‑mail da 
 ### 6) Fluxo de uso (admin)
 
 - Categorias → crie algumas.
-- Produtos → “Novo”: preencha título, resumo, imagem, links, tags.
+- Produtos → “Novo”: cole o link do produto (ex.: Amazon) e o sistema tenta preencher título/imagem/preço usando a Rainforest API; depois ajuste resumo, categoria e publique.
 - Escreva o artigo (TipTap). Autosave cuida de você.
 - Reviews → importar do link principal, ou adicionar manual.
 - Clique em “Editar” na review para abrir o modal e (opcional) subir avatar.

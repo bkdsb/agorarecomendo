@@ -25,18 +25,52 @@ async function ensureUniqueSlug(base: string): Promise<string> {
   }
 }
 
+async function ensureUniqueTitle(base: string): Promise<string> {
+  let candidate = (base && base.trim()) || 'Produto';
+  let counter = 1;
+  while (true) {
+    const existing = await prisma.product.findUnique({ where: { title: candidate } });
+    if (!existing) return candidate;
+    counter += 1;
+    // Use sufixo numérico discreto para evitar conflitos
+    candidate = `${(base && base.trim()) || 'Produto'} ${counter}`;
+  }
+}
+
+// GET /api/products - Lista produtos (somente autenticado)
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+    const products = await prisma.product.findMany({
+      include: {
+        category: true,
+        links: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return NextResponse.json(products);
+  } catch (error) {
+    console.error('Erro ao listar produtos:', error);
+    return new NextResponse('Error fetching products', { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
     const productData = await req.json();
-    const baseSlug = slugify(productData.title);
+    const uniqueTitle = await ensureUniqueTitle(String(productData.title || 'Produto'));
+    const baseSlug = slugify(uniqueTitle);
     const slug = await ensureUniqueSlug(baseSlug);
 
     const product = await prisma.product.create({
       data: {
-        title: productData.title,
+        title: uniqueTitle,
         slug,
         price: productData.price ?? null,
         imageUrl: productData.imageUrl ?? null,

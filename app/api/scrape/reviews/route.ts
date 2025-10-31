@@ -18,7 +18,8 @@ function extractJsonLdReviews(html: string) {
           const rating = parseFloat(item.reviewRating?.ratingValue ?? item.ratingValue ?? 0) || 0;
           const content = item.reviewBody ?? item.description ?? '';
           if (content) {
-            reviews.push({ id: `scraped-${reviews.length + 1}-${Date.now()}`, author, rating, content, isManual: false });
+            const createdAt = (item.datePublished && !isNaN(Date.parse(item.datePublished))) ? new Date(item.datePublished).toISOString() : new Date().toISOString();
+            reviews.push({ id: `scraped-${reviews.length + 1}-${Date.now()}`, author, rating, content, isManual: false, createdAt });
           }
         }
         if (item.review) {
@@ -28,7 +29,8 @@ function extractJsonLdReviews(html: string) {
             const rating = parseFloat(r.reviewRating?.ratingValue ?? r.ratingValue ?? 0) || 0;
             const content = r.reviewBody ?? r.description ?? '';
             if (content) {
-              reviews.push({ id: `scraped-${reviews.length + 1}-${Date.now()}`, author, rating, content, isManual: false });
+              const createdAt = (r.datePublished && !isNaN(Date.parse(r.datePublished))) ? new Date(r.datePublished).toISOString() : new Date().toISOString();
+              reviews.push({ id: `scraped-${reviews.length + 1}-${Date.now()}`, author, rating, content, isManual: false, createdAt });
             }
           }
         }
@@ -90,7 +92,47 @@ function extractAmazonHtmlReviews(html: string) {
         || (li.match(/data-hook=["']review-body["'][^>]*>([\s\S]*?)<\/span>/i)?.[1])
         || '';
       const content = stripHtml(bodyHtml);
-      if (content) list.push({ id: `scraped-${list.length + 1}-${Date.now()}`, author, rating, content, isManual: false });
+      // Avatar do autor (se disponível)
+      let avatarUrl = '';
+      const avatarBlock = li.match(/<div[^>]*class=["'][^"']*a-profile-avatar[^"']*["'][^>]*>\s*<img[^>]*>/i)?.[0] || '';
+      if (avatarBlock) {
+        const mDataSrc = avatarBlock.match(/data-src=["']([^"']+)["']/i);
+        const mSrc = avatarBlock.match(/src=["']([^"']+)["']/i);
+        avatarUrl = (mDataSrc?.[1] || mSrc?.[1] || '').trim();
+      }
+      if (content) list.push({ id: `scraped-${list.length + 1}-${Date.now()}`, author, rating, content, isManual: false, avatarUrl: avatarUrl || undefined, createdAt: new Date().toISOString() });
+      if (list.length >= 24) break;
+    }
+  } catch {}
+  return list;
+}
+
+// Fallback adicional: extrair reviews do bloco "Global reviews" da Amazon
+function extractAmazonGlobalHtmlReviews(html: string) {
+  const list: any[] = [];
+  try {
+    const scopeMatch = html.match(/<ul[^>]*id=["']cm-cr-global-review-list["'][^>]*>([\s\S]*?)<\/ul>/i);
+    const scope = scopeMatch ? scopeMatch[1] : '';
+    if (!scope) return list;
+    const parts = scope.split(/<li[^>]*data-hook=["']review["'][^>]*>/i).slice(1);
+    for (const block of parts) {
+      const li = block.split('</li>')[0] || block;
+      const author = stripHtml((li.match(/<span[^>]*class=["'][^"']*a-profile-name[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]) || '') || 'Reviewer';
+      const ratingText = stripHtml((li.match(/<i[^>]*data-hook=["']cmps-review-star-rating["'][^>]*>[\s\S]*?<span[^>]*class=["'][^"']*a-icon-alt[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1])
+        || (li.match(/<span[^>]*class=["'][^"']*a-icon-alt[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]) || '') || '';
+      const rating = parseNumberRating(ratingText) || 0;
+      // Preferir conteúdo original (sem tradução) quando disponível
+      const bodyOriginal = (li.match(/<span[^>]*class=["'][^"']*cr-original-review-content[^"']*["'][^>]*[^>]*>([\s\S]*?)<\/span>/i)?.[1]) || '';
+      const bodyHtml = bodyOriginal || (li.match(/data-hook=["']review-body["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]) || '';
+      const content = stripHtml(bodyHtml);
+      let avatarUrl = '';
+      const avatarBlock = li.match(/<div[^>]*class=["'][^"']*a-profile-avatar[^"']*["'][^>]*>\s*<img[^>]*>/i)?.[0] || '';
+      if (avatarBlock) {
+        const mDataSrc = avatarBlock.match(/data-src=["']([^"']+)["']/i);
+        const mSrc = avatarBlock.match(/src=["']([^"']+)["']/i);
+        avatarUrl = (mDataSrc?.[1] || mSrc?.[1] || '').trim();
+      }
+      if (content) list.push({ id: `scraped-${list.length + 1}-${Date.now()}`, author, rating, content, isManual: false, avatarUrl: avatarUrl || undefined, createdAt: new Date().toISOString() });
       if (list.length >= 24) break;
     }
   } catch {}
@@ -114,11 +156,34 @@ export async function POST(req: Request) {
       },
     });
     const html = await res.text();
-    let reviews = extractJsonLdReviews(html);
-    if (reviews.length === 0) {
-      reviews = extractAmazonHtmlReviews(html);
+    // Coleta de múltiplas fontes: JSON-LD + HTML (dp) + HTML (global)
+    let reviews: any[] = [];
+    try { reviews = reviews.concat(extractJsonLdReviews(html)); } catch {}
+    try { reviews = reviews.concat(extractAmazonHtmlReviews(html)); } catch {}
+    try { reviews = reviews.concat(extractAmazonGlobalHtmlReviews(html)); } catch {}
+    // Normalize + deduplicate within the scraped batch to avoid repeats
+    const normalize = (s: string) => (s || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/["'`´’“”]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const keyOf = (r: any) => [
+      normalize(String(r.author || 'anon')),
+      normalize(String(r.content || '')),
+      String(Math.round((Number(r.rating) || 0) * 10) / 10),
+    ].join(' | ');
+    const seen = new Set<string>();
+    const unique: any[] = [];
+    for (const r of reviews) {
+      const k = keyOf(r);
+      if (k && !seen.has(k)) {
+        seen.add(k);
+        unique.push(r);
+      }
     }
-    reviews = reviews.slice(0, 12);
+    reviews = unique.slice(0, 12);
     return NextResponse.json({ reviews });
   } catch (e) {
     return NextResponse.json({ reviews: [] }, { status: 200 });

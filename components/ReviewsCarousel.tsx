@@ -34,11 +34,16 @@ export default function ReviewsCarousel({ reviews, showStars = false, variant = 
           style={variant === 'slide' ? { transform: 'translateX(0)' } : undefined}
         >
           <div className="flex items-center justify-center gap-3 text-sm font-medium text-foreground">
-            {r.avatarUrl ? (
-              <img src={r.avatarUrl} alt={r.author || 'avatar'} className="w-8 h-8 rounded-full object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-foreground/10" />
-            )}
+            <img
+              src={r.avatarUrl || '/avatar-reviews.jpeg'}
+              alt={r.author || 'avatar'}
+              className="w-8 h-8 rounded-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (target.src.endsWith('/avatar-reviews.jpeg')) return; // evita loop
+                target.src = '/avatar-reviews.jpeg';
+              }}
+            />
             <span>{r.author || 'Usuário'}</span>
           </div>
           <div className="mt-1 text-center text-xs text-foreground/70">

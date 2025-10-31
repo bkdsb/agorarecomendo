@@ -97,11 +97,11 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
             const data = new FormData();
             data.append('file', file);
             const res = await fetch('/api/upload', { method: 'POST', body: data });
-            if (!res.ok) throw new Error('Falha ao enviar imagem');
+            if (!res.ok) throw new Error('Failed to upload image');
             const json = await res.json();
             setEditDraft((d) => ({ ...(d as any), avatarUrl: json.url }));
         } catch (err) {
-            // silêncio: o pai mostrará toast se necessário
+            // silent: parent will show toast if needed
         } finally {
             e.target.value = '';
         }
@@ -110,7 +110,7 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-end">
-                <h4 className="text-xl font-semibold text-foreground">Avaliações ({reviews.length})</h4>
+                <h4 className="text-xl font-semibold text-foreground">Reviews ({reviews.length})</h4>
                 <div className="flex items-center gap-1 text-foreground/80">
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                     <span className="text-sm font-semibold">{averageRating.toFixed(1)} / 5.0</span>

@@ -4,35 +4,38 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutGrid, Package, Settings, Megaphone } from 'lucide-react';
 
-const menuItems = [
+import { useLanguage } from '../../components/LanguageProvider';
+
+const menuItems = (t: (k: string) => string) => [
   {
     href: '/admin-secret-xyz',
-    label: 'Dashboard',
+    label: t('header.dashboard'),
     icon: LayoutGrid,
   },
   {
-    href: '/admin-secret-xyz/produtos',
-    label: 'Produtos',
+    href: '/admin-secret-xyz/products',
+    label: t('admin.products'),
     icon: Package,
   },
   {
     href: '/admin-secret-xyz/banners',
-    label: 'Banners',
+    label: t('admin.banners'),
     icon: Megaphone,
   },
   {
-    href: '/admin-secret-xyz/configuracoes',
-    label: 'Configurações',
+    href: '/admin-secret-xyz/settings',
+    label: t('admin.settings'),
     icon: Settings,
   },
 ];
 
 export default function ClientNavigation() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <nav className="space-y-1 px-3">
-      {menuItems.map((item) => {
+      {menuItems(t).map((item) => {
         const isActive = pathname === item.href;
         const Icon = item.icon;
         const iconClass = isActive
