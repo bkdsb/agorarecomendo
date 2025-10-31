@@ -26,15 +26,15 @@ function normalize(s: string) {
 export async function POST(req: Request) {
   try {
     const { url, asin, max = 12, locale } = await req.json();
-    // Default to en-US if locale not provided
-    const reviewLocale = (locale === 'pt-BR' || locale === 'en-US') ? locale : 'en-US';
+    // Normalize locale; default to en-US
+    const reviewLocale: 'en-US' | 'pt-BR' = /pt/i.test(String(locale || '')) ? 'pt-BR' : 'en-US';
     
     const apiKey = process.env.RAINFOREST_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'RAINFOREST_API_KEY ausente' }, { status: 500 });
+      return NextResponse.json({ error: 'Missing RAINFOREST_API_KEY' }, { status: 500 });
     }
     if ((!url || typeof url !== 'string') && (!asin || typeof asin !== 'string')) {
-      return NextResponse.json({ error: 'Informe url ou asin' }, { status: 400 });
+  return NextResponse.json({ error: 'Provide url or asin' }, { status: 400 });
     }
 
     // Validação defensiva de domínio suportado quando URL é fornecida
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const rfRes = await fetch(`${endpoint}?${params.toString()}`, { headers: { 'User-Agent': 'AgoraRecomendoBot/1.0' } });
     if (!rfRes.ok) {
       const text = await rfRes.text().catch(() => '');
-      return NextResponse.json({ error: 'Falha na Rainforest Reviews', details: text }, { status: 502 });
+  return NextResponse.json({ error: 'Rainforest Reviews failed', details: text }, { status: 502 });
     }
 
     const data = (await rfRes.json()) as RainforestReviewsResponse;
@@ -89,6 +89,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ reviews: unique });
   } catch (err) {
     console.error('Rainforest reviews error:', err);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

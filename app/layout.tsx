@@ -17,7 +17,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AgoraRecomendo",
-  description: "As melhores recomendações, selecionadas com cuidado.",
+  description: "The best recommendations, carefully selected.",
 };
 
 export default function RootLayout({

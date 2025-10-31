@@ -6,7 +6,7 @@ import CreateCategoryForm from '@/app/admin-secret-xyz/categories/CreateCategory
 import { useLanguage } from '@/components/LanguageProvider';
 
 export default function CategoriesPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage() as { t: (k: string)=> string; locale: 'en-US' | 'pt-BR' };
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,11 +37,13 @@ export default function CategoriesPage() {
         <div className="text-foreground/70">{t('common.loading') || 'Loading...'}</div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((cat) => (
+          {categories.map((cat) => {
+            const displayName = locale === 'pt-BR' && cat.namePtBr ? cat.namePtBr : cat.name;
+            return (
             <div key={cat.id} className="rounded-2xl border border-border bg-card/70 backdrop-blur-md p-4 hover:bg-card/80 transition">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate text-base font-medium text-foreground">{cat.name}</div>
+                  <div className="truncate text-base font-medium text-foreground">{displayName}</div>
                   <div className="mt-1 truncate text-xs text-foreground/70">/{cat.slug}</div>
                 </div>
                 <DeleteCategoryButton categoryId={cat.id} />
@@ -50,7 +52,7 @@ export default function CategoriesPage() {
                 {cat._count?.products ?? 0} {t('categories.products') || 'product(s)'}
               </div>
             </div>
-          ))}
+          );})}
           {categories.length === 0 && (
             <div className="col-span-full rounded-2xl border border-border bg-card/70 backdrop-blur-md p-6 text-center text-sm text-foreground/70">
               {t('categories.empty') || 'No categories yet. Create the first one above.'}

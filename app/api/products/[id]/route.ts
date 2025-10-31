@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { generateSlug } from '@/lib/utils';
 
 async function ensureUniqueSlug(base: string, excludeId?: string): Promise<string> {
-  let candidate = base || 'produto';
+  let candidate = base || 'product';
   let n = 1;
   while (true) {
     const existing = await prisma.product.findUnique({ where: { slug: candidate } });

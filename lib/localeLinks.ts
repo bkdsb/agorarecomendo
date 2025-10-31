@@ -2,6 +2,14 @@
  * Filters affiliate links by user locale preference
  * Priority: exact locale match > country match > first available link
  */
+function normalizeLocale(loc?: string | null): 'en-US' | 'pt-BR' | undefined {
+  if (!loc) return undefined;
+  const s = loc.toLowerCase();
+  if (s.includes('pt') || s.includes('br')) return 'pt-BR';
+  if (s.includes('en') || s.includes('us')) return 'en-US';
+  return undefined;
+}
+
 export function getLocalizedAffiliateLink(
   links: Array<{ url: string; locale?: string | null; store?: string | null }>,
   userLocale: 'en-US' | 'pt-BR'
@@ -11,16 +19,12 @@ export function getLocalizedAffiliateLink(
   // Normalize locale to country code
   const userCountry = userLocale === 'pt-BR' ? 'br' : 'us';
 
-  // 1. Try exact locale match (en-us or pt-br)
-  const exactMatch = links.find(
-    (link) => link.locale?.toLowerCase() === userLocale.toLowerCase().replace('-', '')
-  );
+  // 1. Try exact locale match
+  const exactMatch = links.find((link) => normalizeLocale(link.locale) === userLocale);
   if (exactMatch?.url) return exactMatch.url;
 
   // 2. Try country match in locale field
-  const countryMatch = links.find((link) =>
-    link.locale?.toLowerCase().includes(userCountry)
-  );
+  const countryMatch = links.find((link) => (link.locale || '').toLowerCase().includes(userCountry));
   if (countryMatch?.url) return countryMatch.url;
 
   // 3. Try store name match (Amazon BR, Amazon US, etc.)
@@ -46,8 +50,10 @@ export function getLinksForLocale(
   const userCountry = userLocale === 'pt-BR' ? 'br' : 'us';
 
   return links.filter((link) => {
-    const locale = link.locale?.toLowerCase() || '';
-    const store = link.store?.toLowerCase() || '';
+    const loc = normalizeLocale(link.locale);
+    if (loc) return loc === userLocale;
+    const locale = (link.locale || '').toLowerCase();
+    const store = (link.store || '').toLowerCase();
     return locale.includes(userCountry) || store.includes(userCountry);
   });
 }

@@ -907,7 +907,8 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
               >
                 {(() => {
                   const imageUrl = formData.imageUrl || 'https://placehold.co/600x600/1C1C1E/F2F2F2?text=Product';
-                  const categoryName = categories.find(c => c.id === formData.categoryId)?.name || (t('editor.noCategory') || 'No Category');
+                  const cat = categories.find(c => c.id === formData.categoryId);
+                  const categoryName = (locale === 'pt-BR' && cat?.namePtBr) ? cat.namePtBr : (cat?.name || (t('editor.noCategory') || 'No Category'));
                   const description = formData.summary || (t('editor.noSummary') || 'No summary.');
                   const title = formData.title || (t('editor.productTitle') || 'Product Title');
                   const affiliate = formData.links[0]?.url || '#';
@@ -1008,10 +1009,13 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                         onClick={async ()=>{
                           let loadingId: string | number | undefined;
                           try {
-                            // Find the affiliate link that matches current locale toggle
-                            const targetLink = formData.links?.find((l: any) => l.locale === locale) || formData.links?.[0];
+                            // Find the affiliate link that matches current locale toggle (normalized)
+                            const targetLink = formData.links?.find((l: any) => {
+                              const lcl = String((l as any)?.locale || '').toLowerCase();
+                              return locale === 'pt-BR' ? (lcl.includes('pt') || lcl.includes('br')) : (lcl.includes('en') || lcl.includes('us'));
+                            }) || formData.links?.[0];
                             const url = targetLink?.url;
-                            const linkLocale = (targetLink as any)?.locale || 'en-US';
+                            const linkLocale: 'en-US' | 'pt-BR' = (String((targetLink as any)?.locale || '').toLowerCase().includes('pt') || String((targetLink as any)?.locale || '').toLowerCase().includes('br')) ? 'pt-BR' : 'en-US';
                             
                             if (!url) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
                             loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
@@ -1025,11 +1029,11 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                               const newReviews = data.reviews.filter((r:any)=> !existingKeys.has(keyOf(r))).map((r:any)=>({...r, isManual: false, locale: linkLocale}));
                               const merged = [...reviews, ...newReviews];
                               setReviews(merged);
-                              toast.dismiss(loadingId);
+                              toast.dismiss(loadingId as any);
                               toast.success(`${newReviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
                               setIsImportOpen(false);
                             } else {
-                              toast.dismiss(loadingId);
+                              toast.dismiss(loadingId as any);
                               toast.info(t('reviews.couldNotExtract') || 'Could not extract reviews', undefined, { placement: 'bottom-center' });
                             }
                           } catch (e) {
@@ -1050,10 +1054,13 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                         onClick={async ()=>{
                           let loadingId: string | number | undefined;
                           try {
-                            // Find the affiliate link that matches current locale toggle
-                            const targetLink = formData.links?.find((l: any) => l.locale === locale) || formData.links?.[0];
+                            // Find the affiliate link that matches current locale toggle (normalized)
+                            const targetLink = formData.links?.find((l: any) => {
+                              const lcl = String((l as any)?.locale || '').toLowerCase();
+                              return locale === 'pt-BR' ? (lcl.includes('pt') || lcl.includes('br')) : (lcl.includes('en') || lcl.includes('us'));
+                            }) || formData.links?.[0];
                             const url = targetLink?.url;
-                            const linkLocale = (targetLink as any)?.locale || 'en-US';
+                            const linkLocale: 'en-US' | 'pt-BR' = (String((targetLink as any)?.locale || '').toLowerCase().includes('pt') || String((targetLink as any)?.locale || '').toLowerCase().includes('br')) ? 'pt-BR' : 'en-US';
                             
                             if (!url) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
                             loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });

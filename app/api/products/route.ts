@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { generateSlug } from '@/lib/utils';
 
 async function ensureUniqueSlug(base: string): Promise<string> {
-  let candidate = base || 'produto';
+  let candidate = base || 'product';
   let counter = 1;
   while (true) {
     const existing = await prisma.product.findUnique({ where: { slug: candidate } });
@@ -17,7 +17,7 @@ async function ensureUniqueSlug(base: string): Promise<string> {
 }
 
 async function ensureUniqueTitle(base: string): Promise<string> {
-  let candidate = (base && base.trim()) || 'Produto';
+  let candidate = (base && base.trim()) || 'Product';
   let counter = 1;
   while (true) {
     const existing = await prisma.product.findUnique({ where: { title: candidate } });
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     const firstLinkLocale = productData.links?.[0]?.locale || 'en-us';
     const productLocale = (firstLinkLocale === 'pt-br' ? 'pt-BR' : 'en-US') as 'en-US' | 'pt-BR';
     
-    const uniqueTitle = await ensureUniqueTitle(String(productData.title || 'Produto'));
+  const uniqueTitle = await ensureUniqueTitle(String(productData.title || 'Product'));
     const baseSlug = generateSlug(uniqueTitle, productLocale);
     const slug = await ensureUniqueSlug(baseSlug);
 
