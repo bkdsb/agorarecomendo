@@ -124,29 +124,31 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                 {reviews.map(review => {
                     const isEditing = editingId === review.id;
                     return (
-                        <div key={review.id} className="p-3 bg-background/70 backdrop-blur-sm rounded-xl shadow-sm border border-border">
-                            <div className="flex justify-between items-start gap-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ring-1 ring-foreground/15 shadow-sm bg-foreground/10">
+                        <div key={review.id} className="p-3 bg-background/70 backdrop-blur-sm rounded-xl shadow-sm border border-border h-28">
+                            <div className="h-full flex justify-between items-center gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ring-1 ring-foreground/15 shadow-sm bg-foreground/10 shrink-0">
                                         <img
                                           src={review.avatarUrl || '/avatar-reviews.jpeg'}
                                           alt={review.author || 'avatar'}
-                                          className="w-full h-full object-cover"
+                                          className="w-full h-full object-cover object-center"
                                           onError={(e) => {
                                             const t = e.target as HTMLImageElement;
                                             if (!t.src.endsWith('/avatar-reviews.jpeg')) t.src = '/avatar-reviews.jpeg';
                                           }}
                                         />
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-foreground flex items-center gap-2 truncate">
                                             {review.author}
                                             {review.isManual && <span className="text-xs text-blue-500/80">(Manual)</span>}
                                         </p>
-                                        <p className="text-xs text-foreground/70 mt-1 flex items-start gap-1">
-                                            <span className="inline-flex items-center gap-1 text-yellow-500"><Star className="w-3.5 h-3.5 fill-yellow-500" /> {review.rating.toFixed(1)}</span>
-                                            <span className="text-foreground/70">“{review.content.substring(0, 120)}{review.content.length > 120 ? '...' : ''}”</span>
-                                        </p>
+                                        <div className="mt-1 text-xs text-foreground/70 flex items-start gap-1">
+                                            <span className="inline-flex items-center gap-1 text-yellow-500 shrink-0"><Star className="w-3.5 h-3.5 fill-yellow-500" /> {review.rating.toFixed(1)}</span>
+                                            <span className="text-foreground/70 min-w-0" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                “{review.content}”
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
