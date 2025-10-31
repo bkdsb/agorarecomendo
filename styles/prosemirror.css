@@ -25,13 +25,13 @@
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0;
   /* Padding do Novel tutorial: p-12 px-8 sm:px-12 */
-  padding: 3rem 2rem; /* 48px vertical, 32px horizontal */
+  padding: 3rem 2rem 2.5rem 2rem; /* padding mais compacto, Apple-like */
 }
 
 @media (min-width: 640px) {
   .ProseMirror {
-    padding-left: 3rem;  /* 48px */
-    padding-right: 3rem; /* 48px */
+    padding-left: 2.5rem;  /* ~40px */
+    padding-right: 2.5rem; /* ~40px */
   }
 }
 
@@ -252,7 +252,8 @@ img.ProseMirror-separator {
   background-position: center;
   width: 1.2rem;
   height: 1.5rem;
-  z-index: 50;
+  /* Elevar acima do overlay do fullscreen (z-[100]) */
+  z-index: 200;
   cursor: grab;
 }
 

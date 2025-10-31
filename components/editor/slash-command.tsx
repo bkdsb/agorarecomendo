@@ -1,16 +1,28 @@
 "use client";
 
-import { CheckSquare, Code, Heading1, Heading2, Heading3, List, ListOrdered, MessageSquarePlus, Text, TextQuote, ImageIcon } from "lucide-react";
+import { CheckSquare, Code, Heading1, Heading2, Heading3, List, ListOrdered, Text, TextQuote, ImageIcon } from "lucide-react";
 import { createSuggestionItems, Command, renderItems } from "novel";
+import { uploadFn } from "./image-upload";
 
 export const suggestionItems = createSuggestionItems([
   {
-    title: "Send Feedback",
-    description: "Let us know how we can improve.",
-    icon: <MessageSquarePlus size={18} />,
+    title: "Image",
+    description: "Upload an image from your computer.",
+    searchTerms: ["photo", "picture", "media"],
+    icon: <ImageIcon size={18} />,
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
-      window.open("/feedback", "_blank");
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async () => {
+        if (input.files?.length) {
+          const file = input.files[0];
+          const pos = editor.view.state.selection.from;
+          uploadFn(file, editor.view, pos);
+        }
+      };
+      input.click();
     },
   },
   {
