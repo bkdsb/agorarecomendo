@@ -120,14 +120,14 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
             </div>
 
             {/* Lista de Reviews */}
-            <div className="max-h-80 overflow-y-auto space-y-3 p-2 bg-black/5 dark:bg-white/5 rounded-lg border border-black/10 dark:border-white/10">
+            <div className="max-h-80 overflow-y-auto space-y-3 p-2 rounded-xl border border-border bg-background/50 backdrop-blur-sm">
                 {reviews.map(review => {
                     const isEditing = editingId === review.id;
                     return (
-                        <div key={review.id} className="p-3 bg-card rounded-md shadow-sm">
+                        <div key={review.id} className="p-3 bg-background/70 backdrop-blur-sm rounded-xl shadow-sm border border-border">
                             <div className="flex justify-between items-start gap-3">
                                 <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-foreground/10 flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ring-1 ring-foreground/15 shadow-sm bg-foreground/10">
                                         <img
                                           src={review.avatarUrl || '/avatar-reviews.jpeg'}
                                           alt={review.author || 'avatar'}
@@ -235,7 +235,7 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                         <h5 className="text-lg font-semibold text-foreground">{t('reviews.edit') || 'Editar Avaliação'}</h5>
                         <div className="mt-4 grid grid-cols-1 gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-full overflow-hidden bg-foreground/10 flex items-center justify-center shrink-0">
+                                                                <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shrink-0 ring-1 ring-foreground/15 shadow-sm bg-foreground/10">
                                     <img
                                       src={editDraft.avatarUrl || '/avatar-reviews.jpeg'}
                                       alt={editDraft.author || 'avatar'}
