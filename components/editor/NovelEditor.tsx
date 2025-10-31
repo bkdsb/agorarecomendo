@@ -90,23 +90,37 @@ export default function NovelEditor({
     return `${num} ${label}`;
   };
 
-  // Keep global drag handle aligned with editor gutter via CSS var
+  // Keep global drag handle aligned with editor content (Novel template approach)
   useEffect(() => {
     const update = () => {
       const root = containerRef.current;
       if (!root) return;
-      const prose = root.querySelector('.ProseMirror') as HTMLElement | null;
-      const target = prose || root;
-      const rect = target.getBoundingClientRect();
-      // Offset the handle ~28px to the left of text content
-      const offset = 28;
-      const left = Math.max(8, rect.left - offset);
+      
+      // Query the ProseMirror editor element directly (as per Novel tutorial)
+      const prosemirror = root.querySelector('.ProseMirror') as HTMLElement | null;
+      if (!prosemirror) return;
+      
+      // Get bounding rect of the ProseMirror content area
+      const rect = prosemirror.getBoundingClientRect();
+      
+      // Position the drag handle ~28px to the left of the content start
+      // (matching Novel's default offset for the handle icon width + gap)
+      const left = Math.max(8, rect.left - 28);
+      
+      // Update CSS variable for drag handle positioning
       document.documentElement.style.setProperty('--drag-handle-left', `${Math.round(left)}px`);
     };
+    
+    // Initial update
     update();
+    
+    // Update on window resize
     window.addEventListener('resize', update);
+    
+    // Update on container size changes
     const ro = new ResizeObserver(update);
     if (containerRef.current) ro.observe(containerRef.current);
+    
     return () => {
       window.removeEventListener('resize', update);
       ro.disconnect();

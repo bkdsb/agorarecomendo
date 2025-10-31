@@ -235,12 +235,16 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                         <h5 className="text-lg font-semibold text-foreground">{t('reviews.edit') || 'Editar Avaliação'}</h5>
                         <div className="mt-4 grid grid-cols-1 gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-full overflow-hidden bg-foreground/10 flex items-center justify-center">
-                                    {editDraft.avatarUrl ? (
-                                        <img src={editDraft.avatarUrl} alt={editDraft.author || 'avatar'} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User className="w-6 h-6 text-foreground/60" />
-                                    )}
+                                <div className="w-14 h-14 rounded-full overflow-hidden bg-foreground/10 flex items-center justify-center shrink-0">
+                                    <img
+                                      src={editDraft.avatarUrl || '/avatar-reviews.jpeg'}
+                                      alt={editDraft.author || 'avatar'}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        const t = e.target as HTMLImageElement;
+                                        if (!t.src.endsWith('/avatar-reviews.jpeg')) t.src = '/avatar-reviews.jpeg';
+                                      }}
+                                    />
                                 </div>
                                 <div className="flex gap-2">
                                     <button type="button" onClick={onPickAvatar} className="px-3 py-1.5 text-xs rounded-md bg-background border border-border text-foreground hover:bg-card/60">{editDraft.avatarUrl ? (t('reviews.avatar.change') || 'Trocar Avatar') : (t('reviews.avatar.add') || 'Adicionar Avatar')}</button>
