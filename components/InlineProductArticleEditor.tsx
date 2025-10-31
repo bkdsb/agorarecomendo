@@ -218,21 +218,6 @@ export default function InlineProductArticleEditor({
   const ActionArea = (
     <div className="flex items-center gap-2">
       <button
-        title={tr("article.hide_editor", "Hide editor")}
-        onClick={() => {
-          if (dirty) handleSave(undefined, { silent: true });
-          userHidRef.current = true; // Mark that user intentionally hid editor
-          setIsClosing(true);
-          setTimeout(() => {
-            setIsHidden(true);
-            onHiddenChange?.(true); // Notify parent
-          }, 180);
-        }}
-        className="btn-ghost btn-sm w-8 h-8 p-0 rounded-full"
-      >
-        –
-      </button>
-      <button
         onClick={() => handleSave(undefined, { publish: false })}
         className="btn-secondary btn-sm"
         disabled={saveStatus === "Saving"}
