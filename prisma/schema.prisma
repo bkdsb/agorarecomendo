@@ -55,6 +55,7 @@ model Review {
   isManual  Boolean  @default(false)
   productId String
   avatarUrl String?
+  locale    String   @default("en-US") // "en-US" or "pt-BR" - matches affiliate link locale
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 

@@ -10,6 +10,7 @@ import ReviewsCarousel from '../../../../../components/ReviewsCarousel';
 import ReviewsMarquee from '../../../../../components/ReviewsMarquee';
 import { useToast } from '@/components/ToastProvider';
 import { useLanguage } from '@/components/LanguageProvider';
+import { generateSlug } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -1007,17 +1008,21 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                         onClick={async ()=>{
                           let loadingId: string | number | undefined;
                           try {
-                            const primary = formData.links?.[0]?.url;
-                            if (!primary) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
+                            // Find the affiliate link that matches current locale toggle
+                            const targetLink = formData.links?.find((l: any) => l.locale === locale) || formData.links?.[0];
+                            const url = targetLink?.url;
+                            const linkLocale = (targetLink as any)?.locale || 'en-US';
+                            
+                            if (!url) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
                             loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
-                            const res = await fetch('/api/scrape/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: primary }) });
+                            const res = await fetch('/api/scrape/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, locale: linkLocale }) });
                             const data = await res.json();
                             if (res.ok && Array.isArray(data?.reviews)) {
                               // Dedup: normalize + compare author + content + rating
                               const normalize = (s: string) => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/["'`´'""]/g,'').replace(/\s+/g,' ').trim();
                               const keyOf = (r: any) => [normalize(r.author||''), normalize(r.content||''), String(Math.round((Number(r.rating)||0)*10)/10)].join('|');
                               const existingKeys = new Set(reviews.map(keyOf));
-                              const newReviews = data.reviews.filter((r:any)=> !existingKeys.has(keyOf(r))).map((r:any)=>({...r, isManual: false}));
+                              const newReviews = data.reviews.filter((r:any)=> !existingKeys.has(keyOf(r))).map((r:any)=>({...r, isManual: false, locale: linkLocale}));
                               const merged = [...reviews, ...newReviews];
                               setReviews(merged);
                               toast.dismiss(loadingId);
@@ -1028,7 +1033,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                               toast.info(t('reviews.couldNotExtract') || 'Could not extract reviews', undefined, { placement: 'bottom-center' });
                             }
                           } catch (e) {
-                            if (loadingId !== undefined) toast.dismiss(loadingId);
+                            if (loadingId !== undefined) toast.dismiss(loadingId as any);
                             toast.error(t('reviews.importFailed') || 'Failed to import reviews', undefined, { placement: 'bottom-center' });
                           }
                         }}
@@ -1045,17 +1050,21 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                         onClick={async ()=>{
                           let loadingId: string | number | undefined;
                           try {
-                            const primary = formData.links?.[0]?.url;
-                            if (!primary) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
+                            // Find the affiliate link that matches current locale toggle
+                            const targetLink = formData.links?.find((l: any) => l.locale === locale) || formData.links?.[0];
+                            const url = targetLink?.url;
+                            const linkLocale = (targetLink as any)?.locale || 'en-US';
+                            
+                            if (!url) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
                             loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
-                            const res = await fetch('/api/scrape/reviews-api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: primary, max: 12 }) });
+                            const res = await fetch('/api/scrape/reviews-api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, max: 12, locale: linkLocale }) });
                             const data = await res.json();
                             if (res.ok && Array.isArray(data?.reviews)) {
                               // Dedup: normalize + compare author + content + rating
                               const normalize = (s: string) => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/["'`´'""]/g,'').replace(/\s+/g,' ').trim();
                               const keyOf = (r: any) => [normalize(r.author||''), normalize(r.content||''), String(Math.round((Number(r.rating)||0)*10)/10)].join('|');
                               const existingKeys = new Set(reviews.map(keyOf));
-                              const newReviews = data.reviews.filter((r:any)=> !existingKeys.has(keyOf(r))).map((r:any)=>({...r, isManual: false}));
+                              const newReviews = data.reviews.filter((r:any)=> !existingKeys.has(keyOf(r))).map((r:any)=>({...r, isManual: false, locale: linkLocale}));
                               const merged = [...reviews, ...newReviews];
                               setReviews(merged);
                               toast.dismiss(loadingId as any);

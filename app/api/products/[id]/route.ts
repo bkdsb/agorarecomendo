@@ -3,15 +3,7 @@ import prisma from '@/lib/prisma';
 import { cleanHtml } from '@/lib/sanitize';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-
-function slugify(title: string): string {
-  return (title || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+import { generateSlug } from '@/lib/utils';
 
 async function ensureUniqueSlug(base: string, excludeId?: string): Promise<string> {
   let candidate = base || 'produto';
@@ -75,7 +67,10 @@ export async function PATCH(
     // Atualiza slug se título mudar
     let slugUpdate: string | undefined = undefined;
     if (typeof title === 'string' && title.trim().length > 0) {
-      const base = slugify(title);
+      // Detect locale from first link (default to en-US)
+      const firstLinkLocale = links?.[0]?.locale || 'en-us';
+      const productLocale = (firstLinkLocale === 'pt-br' ? 'pt-BR' : 'en-US') as 'en-US' | 'pt-BR';
+      const base = generateSlug(title, productLocale);
       slugUpdate = await ensureUniqueSlug(base, params.id);
     }
 
@@ -160,6 +155,7 @@ export async function PATCH(
                   content: r.content ?? '',
                   isManual: !!r.isManual,
                   avatarUrl: r.avatarUrl ?? null,
+                    locale: (r.locale === 'pt-BR' || r.locale === 'en-US') ? r.locale : 'en-US',
                 })),
               },
             }

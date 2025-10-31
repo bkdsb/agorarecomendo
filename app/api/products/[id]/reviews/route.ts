@@ -31,7 +31,7 @@ export async function POST(
     const session = await getServerSession(authOptions);
     if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
-    const { author, rating, content } = await req.json();
+    const { author, rating, content, locale, avatarUrl } = await req.json();
     if (!content || !content.trim()) {
       return new NextResponse('Conteúdo é obrigatório', { status: 400 });
     }
@@ -43,6 +43,8 @@ export async function POST(
         rating: typeof rating === 'number' ? rating : null,
         content: content.trim(),
         isManual: true,
+        locale: (locale === 'pt-BR' || locale === 'en-US') ? locale : 'en-US',
+        avatarUrl: avatarUrl || null,
       },
     });
 

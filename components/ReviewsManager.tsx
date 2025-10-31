@@ -10,7 +10,8 @@ interface Review {
   rating: number;
   content: string;
   isManual: boolean;
-    avatarUrl?: string;
+  avatarUrl?: string;
+  locale?: string; // "en-US" or "pt-BR"
 }
 
 interface ReviewsManagerProps {
@@ -19,7 +20,7 @@ interface ReviewsManagerProps {
 }
 
 const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps) => {
-    const { t } = useLanguage();
+    const { t, locale } = useLanguage() as { t: (k: string) => string; locale: 'en-US' | 'pt-BR' };
     const [reviews, setReviews] = useState<Review[]>(initialReviews);
     // Sincroniza quando o pai atualiza as reviews (ex.: importadas via scraping)
     useEffect(() => {
@@ -31,13 +32,6 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const hiddenFileInput = useRef<HTMLInputElement | null>(null);
     const [newReview, setNewReview] = useState({ author: '', rating: 5, content: '' });
-
-    // Calcula a média das avaliações
-    const averageRating = useMemo(() => {
-        if (reviews.length === 0) return 0;
-        const total = reviews.reduce((sum, review) => sum + review.rating, 0);
-        return (total / reviews.length);
-    }, [reviews]);
 
     const handleReviewChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -51,7 +45,7 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
 
         const updatedReviews = [
             ...reviews,
-            { ...newReview, id: newId, rating: finalRating, isManual: true },
+            { ...newReview, id: newId, rating: finalRating, isManual: true, locale },
         ];
         setReviews(updatedReviews);
         onReviewsChange(updatedReviews);
@@ -109,19 +103,31 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
         }
     };
 
+    // Filter reviews to show only those matching current locale
+    const filteredReviews = useMemo(() => {
+        return reviews.filter(r => !r.locale || r.locale === locale);
+    }, [reviews, locale]);
+
+    // Calculate average based on filtered reviews
+    const averageRatingFiltered = useMemo(() => {
+        if (filteredReviews.length === 0) return 0;
+        const total = filteredReviews.reduce((sum, review) => sum + review.rating, 0);
+        return (total / filteredReviews.length);
+    }, [filteredReviews]);
+
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-end">
-                <h4 className="text-xl font-semibold text-foreground">{(t('chip.reviewsEditor') || 'Reviews')} ({reviews.length})</h4>
+                <h4 className="text-xl font-semibold text-foreground">{(t('chip.reviewsEditor') || 'Reviews')} ({filteredReviews.length})</h4>
                 <div className="flex items-center gap-1 text-foreground/80">
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <span className="text-sm font-semibold">{averageRating.toFixed(1)} / 5.0</span>
+                    <span className="text-sm font-semibold">{averageRatingFiltered.toFixed(1)} / 5.0</span>
                 </div>
             </div>
 
             {/* Lista de Reviews */}
             <div className="max-h-80 overflow-y-auto space-y-3 p-2 rounded-xl border border-border bg-background/50 backdrop-blur-sm">
-                {reviews.map(review => {
+                {filteredReviews.map(review => {
                     const isEditing = editingId === review.id;
                     return (
                         <div key={review.id} className="p-3 bg-background/70 backdrop-blur-sm rounded-xl shadow-sm border border-border h-28">

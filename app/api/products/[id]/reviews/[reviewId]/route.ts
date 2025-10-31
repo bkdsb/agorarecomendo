@@ -12,13 +12,15 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
     if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
-    const { author, rating, content } = await req.json();
+    const { author, rating, content, locale, avatarUrl } = await req.json();
     const updated = await prisma.review.update({
       where: { id: params.reviewId },
       data: {
         ...(author !== undefined ? { author } : {}),
         ...(rating !== undefined ? { rating } : {}),
         ...(content !== undefined ? { content } : {}),
+        ...(locale !== undefined && (locale === 'pt-BR' || locale === 'en-US') ? { locale } : {}),
+        ...(avatarUrl !== undefined ? { avatarUrl } : {}),
         isManual: true,
       },
     });

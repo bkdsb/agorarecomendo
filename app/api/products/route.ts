@@ -3,16 +3,7 @@ import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
 import { cleanHtml } from '@/lib/sanitize';
 import { authOptions } from '@/lib/auth';
-
-// Slug básico
-function slugify(title: string): string {
-  return (title || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+import { generateSlug } from '@/lib/utils';
 
 async function ensureUniqueSlug(base: string): Promise<string> {
   let candidate = base || 'produto';
@@ -64,8 +55,12 @@ export async function POST(req: Request) {
     if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
     const productData = await req.json();
+    // Detect locale from first link (default to en-US)
+    const firstLinkLocale = productData.links?.[0]?.locale || 'en-us';
+    const productLocale = (firstLinkLocale === 'pt-br' ? 'pt-BR' : 'en-US') as 'en-US' | 'pt-BR';
+    
     const uniqueTitle = await ensureUniqueTitle(String(productData.title || 'Produto'));
-    const baseSlug = slugify(uniqueTitle);
+    const baseSlug = generateSlug(uniqueTitle, productLocale);
     const slug = await ensureUniqueSlug(baseSlug);
 
     const product = await prisma.product.create({

@@ -97,8 +97,13 @@ export default async function ProductArticlePage({ params, searchParams }: Props
     };
   } catch {}
 
-  // Ordenação e corte das reviews
-  const reviewsOrdered = [...(product.reviews || [])];
+  // Filter reviews by user's locale, then order and slice
+  const reviewsFiltered = (product.reviews || []).filter((r: any) => {
+    // If review has no locale field (old data), show it for all locales
+    // Otherwise only show if it matches user's locale
+    return !r.locale || r.locale === userLocale;
+  });
+  const reviewsOrdered = [...reviewsFiltered];
   if (reviewsDisplay.order === 'rating') reviewsOrdered.sort((a:any,b:any)=> (Number(b.rating)||0)-(Number(a.rating)||0));
   else reviewsOrdered.sort((a:any,b:any)=> new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime());
   const reviewsToShow = reviewsOrdered.slice(0, reviewsDisplay.max);

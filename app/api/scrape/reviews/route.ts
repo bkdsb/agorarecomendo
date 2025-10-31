@@ -144,10 +144,12 @@ function extractAmazonGlobalHtmlReviews(html: string) {
 
 export async function POST(req: Request) {
   try {
-    let { url } = await req.json();
+    let { url, locale } = await req.json();
     if (typeof url !== 'string' || !url.startsWith('http')) {
       return NextResponse.json({ reviews: [] }, { status: 200 });
     }
+    // Default to en-US if locale not provided
+    const reviewLocale = (locale === 'pt-BR' || locale === 'en-US') ? locale : 'en-US';
     
     // Se a URL for da página do produto Amazon e não da página de reviews, redirecione automaticamente
     try {
@@ -203,6 +205,10 @@ export async function POST(req: Request) {
     }
     // Meta de 12 reviews mínimo; se coletar mais, mantém até 24 para dar margem
     reviews = unique.slice(0, 24);
+    
+    // Add locale to all reviews so they can be filtered properly
+    reviews = reviews.map(r => ({ ...r, locale: reviewLocale }));
+    
     return NextResponse.json({ reviews });
   } catch (e) {
     return NextResponse.json({ reviews: [] }, { status: 200 });

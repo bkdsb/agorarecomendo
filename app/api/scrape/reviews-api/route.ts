@@ -25,7 +25,10 @@ function normalize(s: string) {
 
 export async function POST(req: Request) {
   try {
-    const { url, asin, max = 12 } = await req.json();
+    const { url, asin, max = 12, locale } = await req.json();
+    // Default to en-US if locale not provided
+    const reviewLocale = (locale === 'pt-BR' || locale === 'en-US') ? locale : 'en-US';
+    
     const apiKey = process.env.RAINFOREST_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'RAINFOREST_API_KEY ausente' }, { status: 500 });
@@ -79,7 +82,7 @@ export async function POST(req: Request) {
       const k = keyOf(r);
       if (seen.has(k)) continue;
       seen.add(k);
-      unique.push(r);
+      unique.push({ ...r, locale: reviewLocale }); // Add locale to each review
       if (unique.length >= Math.max(1, Math.min(Number(max) || 12, 50))) break;
     }
 
