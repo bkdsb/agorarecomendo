@@ -242,7 +242,7 @@ export default function ArticleEditorPage() {
       {loading ? (
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : (
-        <div className="w-full max-w-7xl mx-auto">
+        <div className="flex min-h-screen flex-col items-center sm:px-5">
           {React.createElement(
             require('@/components/editor/NovelEditor').default,
             {
