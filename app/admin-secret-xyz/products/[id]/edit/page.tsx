@@ -1005,22 +1005,30 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                         type="button"
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border/60 bg-background/80 hover:bg-background transition-all text-left"
                         onClick={async ()=>{
+                          let loadingId: string | number | undefined;
                           try {
                             const primary = formData.links?.[0]?.url;
                             if (!primary) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
-                            const loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
+                            loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
                             const res = await fetch('/api/scrape/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: primary }) });
                             const data = await res.json();
-                            toast.dismiss(loadingId);
                             if (res.ok && Array.isArray(data?.reviews)) {
-                              const merged = [...reviews, ...data.reviews.map((r:any)=>({ ...r, isManual: false }))];
+                              // Dedup: normalize + compare author + content + rating
+                              const normalize = (s: string) => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/["'`´'""]/g,'').replace(/\s+/g,' ').trim();
+                              const keyOf = (r: any) => [normalize(r.author||''), normalize(r.content||''), String(Math.round((Number(r.rating)||0)*10)/10)].join('|');
+                              const existingKeys = new Set(reviews.map(keyOf));
+                              const newReviews = data.reviews.filter((r:any)=> !existingKeys.has(keyOf(r))).map((r:any)=>({...r, isManual: false}));
+                              const merged = [...reviews, ...newReviews];
                               setReviews(merged);
-                              toast.success(`${data.reviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
+                              toast.dismiss(loadingId);
+                              toast.success(`${newReviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
                               setIsImportOpen(false);
                             } else {
+                              toast.dismiss(loadingId);
                               toast.info(t('reviews.couldNotExtract') || 'Could not extract reviews', undefined, { placement: 'bottom-center' });
                             }
                           } catch (e) {
+                            if (loadingId !== undefined) toast.dismiss(loadingId);
                             toast.error(t('reviews.importFailed') || 'Failed to import reviews', undefined, { placement: 'bottom-center' });
                           }
                         }}
@@ -1035,22 +1043,30 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                         type="button"
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border/60 bg-background/80 hover:bg-background transition-all text-left"
                         onClick={async ()=>{
+                          let loadingId: string | number | undefined;
                           try {
                             const primary = formData.links?.[0]?.url;
                             if (!primary) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
-                            const loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
+                            loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
                             const res = await fetch('/api/scrape/reviews-api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: primary, max: 12 }) });
                             const data = await res.json();
-                            toast.dismiss(loadingId);
                             if (res.ok && Array.isArray(data?.reviews)) {
-                              const merged = [...reviews, ...data.reviews.map((r:any)=>({ ...r, isManual: false }))];
+                              // Dedup: normalize + compare author + content + rating
+                              const normalize = (s: string) => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/["'`´'""]/g,'').replace(/\s+/g,' ').trim();
+                              const keyOf = (r: any) => [normalize(r.author||''), normalize(r.content||''), String(Math.round((Number(r.rating)||0)*10)/10)].join('|');
+                              const existingKeys = new Set(reviews.map(keyOf));
+                              const newReviews = data.reviews.filter((r:any)=> !existingKeys.has(keyOf(r))).map((r:any)=>({...r, isManual: false}));
+                              const merged = [...reviews, ...newReviews];
                               setReviews(merged);
-                              toast.success(`${data.reviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
+                              toast.dismiss(loadingId as any);
+                              toast.success(`${newReviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
                               setIsImportOpen(false);
                             } else {
+                              toast.dismiss(loadingId as any);
                               toast.info(t('reviews.couldNotExtract') || 'Could not extract reviews', undefined, { placement: 'bottom-center' });
                             }
                           } catch (e) {
+                            if (loadingId !== undefined) toast.dismiss(loadingId as any);
                             toast.error(t('reviews.importFailed') || 'Failed to import reviews', undefined, { placement: 'bottom-center' });
                           }
                         }}

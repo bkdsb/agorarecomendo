@@ -76,11 +76,12 @@ function parseNumberRating(raw: string) {
 }
 
 function extractAmazonHtmlReviews(html: string) {
-  // Temporary simplified fallback if JSON-LD is missing
+  // Extract from product page reviews widget (cm-cr-dp-review-list) AND all-reviews page (cm_cr-review_list)
   const list: any[] = [];
   try {
-    const scopeMatch = html.match(/<ul[^>]*id=["']cm-cr-dp-review-list["'][^>]*>([\s\S]*?)<\/ul>/i);
-    const scope = scopeMatch ? scopeMatch[1] : '';
+    // Try both selectors: product page widget + all-reviews page list
+    const scopeMatch = html.match(/<ul[^>]*id=["'](cm-cr-dp-review-list|cm_cr-review_list)["'][^>]*>([\s\S]*?)<\/ul>/i);
+    const scope = scopeMatch ? scopeMatch[2] : '';
     if (!scope) return list;
     const parts = scope.split(/<li[^>]*data-hook=["']review["'][^>]*>/i).slice(1);
     for (const block of parts) {
@@ -88,7 +89,9 @@ function extractAmazonHtmlReviews(html: string) {
       const author = stripHtml((li.match(/<span[^>]*class=["'][^"']*a-profile-name[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]) || '') || 'Reviewer';
       const ratingText = stripHtml((li.match(/<span[^>]*class=["'][^"']*a-icon-alt[^"']*["'][^>]*>([\s\S]*?)<\/span>/i)?.[1]) || '') || '';
       const rating = parseNumberRating(ratingText) || 0;
-      const bodyHtml = (li.match(/data-hook=["']review-collapsed["'][\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i)?.[1])
+      // Preferir o conteúdo original (sem tradução) quando disponível
+      const bodyOriginal = (li.match(/<span[^>]*class=["'][^"']*cr-original-review-content[^"']*["'][^>]*[^>]*>([\s\S]*?)<\/span>/i)?.[1]) || '';
+      const bodyHtml = bodyOriginal || (li.match(/data-hook=["']review-collapsed["'][\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i)?.[1])
         || (li.match(/data-hook=["']review-body["'][^>]*>([\s\S]*?)<\/span>/i)?.[1])
         || '';
       const content = stripHtml(bodyHtml);
@@ -141,10 +144,25 @@ function extractAmazonGlobalHtmlReviews(html: string) {
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
+    let { url } = await req.json();
     if (typeof url !== 'string' || !url.startsWith('http')) {
       return NextResponse.json({ reviews: [] }, { status: 200 });
     }
+    
+    // Se a URL for da página do produto Amazon e não da página de reviews, redirecione automaticamente
+    try {
+      const u = new URL(url);
+      const isAmazonProduct = /amazon\./i.test(u.hostname) && (/\/dp\/[A-Z0-9]{10}/i.test(u.pathname) || /\/gp\/product\/[A-Z0-9]{10}/i.test(u.pathname));
+      if (isAmazonProduct) {
+        const asinMatch = u.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
+        if (asinMatch) {
+          const asin = asinMatch[1];
+          // Redirecionar para a página "Ver todas reviews" para pegar mais dados
+          url = `${u.origin}/product-reviews/${asin}/ref=cm_cr_dp_d_show_all_btm?ie=UTF8&reviewerType=all_reviews`;
+        }
+      }
+    } catch {}
+
     const res = await fetch(url, {
       headers: {
         // Use realistic headers to receive fully rendered HTML blocks
@@ -183,7 +201,8 @@ export async function POST(req: Request) {
         unique.push(r);
       }
     }
-    reviews = unique.slice(0, 12);
+    // Meta de 12 reviews mínimo; se coletar mais, mantém até 24 para dar margem
+    reviews = unique.slice(0, 24);
     return NextResponse.json({ reviews });
   } catch (e) {
     return NextResponse.json({ reviews: [] }, { status: 200 });
