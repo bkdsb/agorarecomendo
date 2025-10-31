@@ -128,9 +128,9 @@ img.ProseMirror-separator {
   height: 1.5rem;
   z-index: 50;
   cursor: grab;
-  /* Align handle with the left gutter of the centered editor (max-w-screen-lg ≈ 1024px)
-     Clamp ensures a sensible position on smaller screens. */
-  left: clamp(12px, calc((100vw - 1024px) / 2 - 36px), 200px) !important;
+  /* Align handle with the left gutter of the editor.
+    Primary: CSS var provided by NovelEditor. Fallback: clamp by container width. */
+  left: var(--drag-handle-left, clamp(12px, calc((100vw - 1024px) / 2 - 36px), 200px)) !important;
 }
 
 .drag-handle:hover {

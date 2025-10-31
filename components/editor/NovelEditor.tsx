@@ -14,7 +14,7 @@ import {
   handleImageDrop,
   handleImagePaste,
 } from "novel";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { defaultExtensions } from "./extensions";
 import { ColorSelector } from "./selectors/ColorSelector";
@@ -22,6 +22,7 @@ import { LinkSelector } from "./selectors/LinkSelector";
 import { MathSelector } from "./selectors/MathSelector";
 import { NodeSelector } from "./selectors/NodeSelector";
 import { Separator } from "@/components/ui/separator";
+import { useLanguage } from "@/components/LanguageProvider";
 
 import GenerativeMenuSwitch from "./generative/generative-menu-switch";
 import { uploadFn } from "./image-upload";
@@ -51,11 +52,13 @@ export default function NovelEditor({
   actionArea,
   leftOverlay,
 }: NovelEditorProps) {
+  const { t, locale } = useLanguage() as { t: (k: string) => string; locale: string };
   const [internalSaveStatus, setInternalSaveStatus] = useState<
     "Saved" | "Unsaved" | "Saving" | "Error"
   >("Saved");
   const saveStatus = controlledSaveStatus ?? internalSaveStatus;
   const [charsCount, setCharsCount] = useState<number>();
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
@@ -82,11 +85,34 @@ export default function NovelEditor({
 
   const formatWords = (n?: number) => {
     if (!n && n !== 0) return "";
-    return new Intl.NumberFormat().format(n) + " words";
+    const num = new Intl.NumberFormat().format(n);
+    const label = locale === 'pt-BR' ? 'palavras' : 'words';
+    return `${num} ${label}`;
   };
 
+  // Keep global drag handle aligned with editor gutter via CSS var
+  useEffect(() => {
+    const update = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // 36px: approximate gutter offset from content to handle
+      const left = Math.max(12, rect.left - 36);
+      document.documentElement.style.setProperty('--drag-handle-left', `${Math.round(left)}px`);
+    };
+    update();
+    window.addEventListener('resize', update);
+    // Some layouts reflow on sidebar toggle/route changes
+    const ro = new ResizeObserver(update);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => {
+      window.removeEventListener('resize', update);
+      ro.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="relative w-full max-w-screen-lg">
+    <div ref={containerRef} className="relative w-full max-w-screen-lg">
       {/* Topo esquerdo (ex.: bandeira/idioma) */}
       {leftOverlay && (
         <div className="absolute left-5 top-5 z-10 flex items-center gap-2.5">
@@ -119,13 +145,13 @@ export default function NovelEditor({
             }
           />
           <span className="tracking-wide select-none font-medium">
-            {saveStatus === "Saved"
-              ? "Saved"
-              : saveStatus === "Saving"
-              ? "Saving…"
-              : saveStatus === "Error"
-              ? "Save failed"
-              : "Unsaved"}
+            {saveStatus === 'Saved'
+              ? (t('common.saved') || 'Saved')
+              : saveStatus === 'Saving'
+              ? (t('common.saving') || 'Saving…')
+              : saveStatus === 'Error'
+              ? (t('common.saveFailed') || 'Save failed')
+              : (t('common.unsaved') || 'Unsaved')}
           </span>
         </div>
       </div>
@@ -158,7 +184,7 @@ export default function NovelEditor({
           slotAfter={<ImageResizer />}
         >
           <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-muted bg-background px-1 py-2 shadow-md transition-all">
-            <EditorCommandEmpty className="px-2 text-muted-foreground">No results</EditorCommandEmpty>
+            <EditorCommandEmpty className="px-2 text-muted-foreground">{t('editor.noResults') || 'No results'}</EditorCommandEmpty>
             <EditorCommandList>
               {suggestionItems.map((item) => (
                 <EditorCommandItem

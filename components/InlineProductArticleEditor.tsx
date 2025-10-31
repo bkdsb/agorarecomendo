@@ -159,26 +159,36 @@ export default function InlineProductArticleEditor({
     }, 5000);
   };
 
-  // Cmd/Ctrl + S saves; Cmd+Shift+E or Esc toggles fullscreen
+  // Cmd/Ctrl + S saves; Cmd+Shift+E toggles fullscreen; Esc exits
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+      const isSave = (e.metaKey || e.ctrlKey) && (e.key?.toLowerCase?.() === "s" || (e as any).code === "KeyS");
+      const isToggleFs = (e.metaKey || e.ctrlKey) && e.shiftKey && ((e.key?.toLowerCase?.() === "e") || (e as any).code === "KeyE");
+      const isEsc = e.key === "Escape";
+
+      if (isSave) {
         e.preventDefault();
         handleSave();
+        return;
       }
-      // Cmd+Shift+E toggles fullscreen
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "e") {
+      if (isToggleFs) {
         e.preventDefault();
         setIsFullscreen((prev) => !prev);
+        return;
       }
-      // Esc exits fullscreen
-      if (e.key === 'Escape' && isFullscreen) {
+      if (isEsc && isFullscreen) {
         e.preventDefault();
         setIsFullscreen(false);
+        return;
       }
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    // Capture phase listeners to avoid editors intercepting first
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+    document.addEventListener("keydown", onKeyDown, { capture: true });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, { capture: true } as any);
+      document.removeEventListener("keydown", onKeyDown, { capture: true } as any);
+    };
   }, [handleSave, isFullscreen]);
 
   // Listen for external fullscreen toggle events

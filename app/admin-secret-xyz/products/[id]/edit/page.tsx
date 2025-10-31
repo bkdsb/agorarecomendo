@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { PlusCircle, Trash2, ImagePlus, ChevronDown } from 'lucide-react';
+import { PlusCircle, Trash2, ImagePlus, ChevronDown, Globe2, Code2 } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import ProductCard from '../../../../../components/ProductCard';
 import ReviewsManager from '../../../../../components/ReviewsManager';
@@ -981,31 +981,58 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
             <div className="text-center mb-5">
               <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide bg-gradient-to-b from-foreground/12 to-foreground/8 text-foreground/90 shadow-sm">{t('chip.reviewsEditor') || 'Reviews Editor'}</span>
               <div className="mt-3 text-[13px] leading-relaxed text-foreground/60">{t('reviews.subtitle') || 'Manage product reviews'}</div>
-              <div className="mt-4">
+              <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+                {/* Import via Scraping (HTML) */}
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 text-[13px] font-medium px-5 py-2.5 rounded-xl bg-gradient-to-b from-foreground to-foreground/90 text-background shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)] active:scale-[0.98] transition-all"
+                  className="inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-xl bg-gradient-to-b from-foreground to-foreground/90 text-background shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)] active:scale-[0.98] transition-all"
                   onClick={async () => {
-                  try {
-                    const primary = formData.links?.[0]?.url;
-                    if (!primary) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
-                    const loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
-                    const res = await fetch('/api/scrape/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: primary }) });
-                    const data = await res.json();
-                    toast.dismiss(loadingId);
-                    if (res.ok && Array.isArray(data?.reviews)) {
-                      const merged = [...reviews, ...data.reviews.map((r:any)=>({ ...r, isManual: false }))];
-                      setReviews(merged);
-                      toast.success(`${data.reviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
-                    } else {
-                      toast.info(t('reviews.couldNotExtract') || 'Could not extract reviews', undefined, { placement: 'bottom-center' });
+                    try {
+                      const primary = formData.links?.[0]?.url;
+                      if (!primary) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
+                      const loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
+                      const res = await fetch('/api/scrape/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: primary }) });
+                      const data = await res.json();
+                      toast.dismiss(loadingId);
+                      if (res.ok && Array.isArray(data?.reviews)) {
+                        const merged = [...reviews, ...data.reviews.map((r:any)=>({ ...r, isManual: false }))];
+                        setReviews(merged);
+                        toast.success(`${data.reviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
+                      } else {
+                        toast.info(t('reviews.couldNotExtract') || 'Could not extract reviews', undefined, { placement: 'bottom-center' });
+                      }
+                    } catch (e) {
+                      toast.error(t('reviews.importFailed') || 'Failed to import reviews', undefined, { placement: 'bottom-center' });
                     }
-                  } catch (e) {
-                    toast.error(t('reviews.importFailed') || 'Failed to import reviews', undefined, { placement: 'bottom-center' });
-                  }
-                }}
+                  }}
                 >
-                  {t('btn.importFromPrimary')}
+                  <Code2 className="w-4 h-4" /> {t('reviews.import.scrapeHtml') || 'Import (Scraping HTML)'}
+                </button>
+                {/* Import via API (Rainforest) */}
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-xl bg-gradient-to-b from-foreground to-foreground/90 text-background shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)] active:scale-[0.98] transition-all"
+                  onClick={async () => {
+                    try {
+                      const primary = formData.links?.[0]?.url;
+                      if (!primary) { toast.info(t('reviews.noPrimaryLink') || 'No primary link found', undefined, { placement: 'bottom-center' }); return; }
+                      const loadingId = toast.loading(t('reviews.fetching') || 'Fetching reviews…', undefined, { placement: 'center' });
+                      const res = await fetch('/api/scrape/reviews-api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: primary, max: 12 }) });
+                      const data = await res.json();
+                      toast.dismiss(loadingId);
+                      if (res.ok && Array.isArray(data?.reviews)) {
+                        const merged = [...reviews, ...data.reviews.map((r:any)=>({ ...r, isManual: false }))];
+                        setReviews(merged);
+                        toast.success(`${data.reviews.length} ${t('reviews.imported') || 'reviews imported'}`, undefined, { placement: 'bottom-center' });
+                      } else {
+                        toast.info(t('reviews.couldNotExtract') || 'Could not extract reviews', undefined, { placement: 'bottom-center' });
+                      }
+                    } catch (e) {
+                      toast.error(t('reviews.importFailed') || 'Failed to import reviews', undefined, { placement: 'bottom-center' });
+                    }
+                  }}
+                >
+                  <Globe2 className="w-4 h-4" /> {t('reviews.import.api') || 'Import (Via API)'}
                 </button>
               </div>
             </div>
