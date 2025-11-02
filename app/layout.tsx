@@ -49,7 +49,7 @@ export default async function RootLayout({
   const messages = { 'en-US': enUS, 'pt-BR': ptBR } as const;
   return (
     <html lang={detected} suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         {/* 2. Embrulhamos TUDO com os dois provedores */}
         <SessionProviderWrapper>
           <ThemeProvider>

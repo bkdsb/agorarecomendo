@@ -9,6 +9,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const config = {
   // Garantir que a renderização seja estrita
   reactStrictMode: true,
+  
+  // Silenciar logs verbosos do CLI
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
+  
   // Definir explicitamente a raiz para o Turbopack quando houver múltiplos lockfiles no workspace
   turbopack: {
     // Caminho absoluto da raiz do app Next.js
