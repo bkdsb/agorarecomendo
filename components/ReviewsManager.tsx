@@ -3,6 +3,8 @@
 import { useState, useMemo, FormEvent, ChangeEvent, useEffect, useRef } from 'react';
 import { Plus, Trash2, Star, User } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageProvider';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard } from '@/components/ui/apple-card';
 
 interface Review {
   id: string;
@@ -126,11 +128,11 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
             </div>
 
             {/* Lista de Reviews */}
-            <div className="max-h-80 overflow-y-auto space-y-3 p-2 rounded-xl border border-border bg-background/50 backdrop-blur-sm">
+            <div className="max-h-80 overflow-y-auto space-y-3 p-2">
                 {filteredReviews.map(review => {
                     const isEditing = editingId === review.id;
                     return (
-                        <div key={review.id} className="p-3 bg-background/70 backdrop-blur-sm rounded-xl shadow-sm border border-border h-28">
+                        <AppleCard key={review.id} variant="glass" className="p-3 h-28">
                             <div className="h-full flex justify-between items-center gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center ring-1 ring-foreground/15 shadow-sm bg-foreground/10 shrink-0">
@@ -158,13 +160,14 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button
+                                    <AppleButton
                                         type="button"
+                                        variant="secondary"
+                                        size="sm"
                                         onClick={() => startEdit(review)}
-                                        className="px-3 py-1.5 text-xs rounded-md bg-background border border-border text-foreground hover:bg-card/60"
                                     >
-                                            {t('common.edit') || 'Editar'}
-                                    </button>
+                                        {t('common.edit') || 'Edit'}
+                                    </AppleButton>
                                     <button 
                                         onClick={() => removeReview(review.id)}
                                         className="p-1.5 text-red-500 hover:text-red-700 transition-colors rounded-md hover:bg-red-500/10"
@@ -175,25 +178,27 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </AppleCard>
                     );
                 })}
                 {reviews.length === 0 && <p className="text-sm text-foreground/50 text-center py-4">{t('reviews.none') || 'Nenhuma avaliação ainda.'}</p>}
             </div>
 
             {/* Botão Adicionar */}
-            <button
+            <AppleButton
                 type="button"
+                variant="secondary"
                 onClick={() => setIsAdding(true)}
-                className="w-full flex items-center justify-center gap-2 p-2 rounded-md bg-background border border-border text-foreground hover:bg-card/60 transition-colors"
+                className="w-full"
             >
-                    <Plus className="w-4 h-4" />
-                    {t('reviews.addManual') || 'Adicionar Avaliação Manual'}
-            </button>
+                <Plus className="w-4 h-4" />
+                {t('reviews.addManual') || 'Adicionar Avaliação Manual'}
+            </AppleButton>
 
             {/* Formulário de Adição */}
             {isAdding && (
-                <form onSubmit={addReview} className="p-4 bg-cinza-espacial/50 rounded-lg space-y-3">
+                <AppleCard variant="glass" className="p-4 space-y-3">
+                <form onSubmit={addReview} className="space-y-3">
                     <h5 className="text-md font-semibold text-foreground">{t('reviews.new') || 'Nova Review'}</h5>
                     <input 
                         type="text" 
@@ -226,20 +231,21 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                         />
                     </div>
                     <div className="flex justify-end gap-2">
-                        <button type="button" onClick={() => setIsAdding(false)} className="px-3 py-1.5 text-sm rounded-md bg-background border border-border text-foreground hover:bg-card/60 transition-colors">
-                            {t('common.cancel') || 'Cancelar'}
-                        </button>
-                        <button type="submit" className="px-3 py-1.5 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors">
-                            {t('common.save') || 'Salvar Review'}
-                        </button>
+                        <AppleButton type="button" variant="secondary" size="sm" onClick={() => setIsAdding(false)}>
+                            {t('common.cancel') || 'Cancel'}
+                        </AppleButton>
+                        <AppleButton type="submit" variant="primary" size="sm">
+                            {t('common.save') || 'Save Review'}
+                        </AppleButton>
                     </div>
                 </form>
+                </AppleCard>
             )}
 
             {/* Modal de Edição da Review */}
             {isEditModalOpen && editDraft && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-                    <div className="bg-card/70 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-lg p-5 border border-border">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <AppleCard variant="premium" className="w-full max-w-lg p-5 shadow-2xl">
                         <h5 className="text-lg font-semibold text-foreground">{t('reviews.edit') || 'Editar Avaliação'}</h5>
                         <div className="mt-4 grid grid-cols-1 gap-4">
                             <div className="flex items-center gap-4">
@@ -278,10 +284,10 @@ const ReviewsManager = ({ initialReviews, onReviewsChange }: ReviewsManagerProps
                             </div>
                         </div>
                         <div className="mt-5 flex justify-end gap-2">
-                            <button type="button" onClick={cancelEdit} className="px-4 py-2 rounded-md bg-background border border-border text-foreground hover:bg-card/60">{t('common.cancel') || 'Cancelar'}</button>
-                            <button type="button" onClick={saveEdit} className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700">{t('common.save') || 'Salvar'}</button>
+                            <AppleButton type="button" variant="secondary" onClick={cancelEdit}>{t('common.cancel') || 'Cancel'}</AppleButton>
+                            <AppleButton type="button" variant="primary" onClick={saveEdit}>{t('common.save') || 'Save'}</AppleButton>
                         </div>
-                    </div>
+                    </AppleCard>
                 </div>
             )}
         </div>

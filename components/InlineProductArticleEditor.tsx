@@ -5,10 +5,13 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import type { JSONContent, EditorInstance } from "novel";
 import { useLanguage } from "./LanguageProvider";
+import { AppleButton } from "./ui/apple-button";
+import { AppleBadge } from "./ui/apple-badge";
 
 const NovelEditor = dynamic(() => import("@/components/editor/NovelEditor"), { ssr: false });
 
 export type SaveStatus = "Saved" | "Saving" | "Unsaved" | "Error";
+export type PublishStatus = "draft" | "published";
 
 // slug helpers removed: slug is managed in product edit page
 
@@ -48,6 +51,7 @@ export default function InlineProductArticleEditor({
     locale === "pt-BR" ? initialArticlePtBr || "" : initialArticleEn || ""
   );
   const [saveStatus, setSaveStatus] = React.useState<SaveStatus>("Saved");
+  const [publishStatus, setPublishStatus] = React.useState<PublishStatus>("draft");
   const [dirty, setDirty] = React.useState(false);
   const autosaveRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
@@ -56,6 +60,27 @@ export default function InlineProductArticleEditor({
   const lastUrlRef = React.useRef<string>("");
   const userHidRef = React.useRef<boolean>(false); // Track if user intentionally hid editor
   const editorRef = React.useRef<EditorInstance | null>(null);
+
+  // Load initial publish status
+  React.useEffect(() => {
+    const loadPublishStatus = async () => {
+      try {
+        const resGet = await fetch(`/api/products/${productId}`);
+        if (resGet.ok) {
+          const prod = await resGet.json();
+          let scraped: any = {};
+          try {
+            scraped = prod?.scrapedQnA ? JSON.parse(prod.scrapedQnA) : {};
+          } catch {}
+          const status = scraped.articleStatus?.[locale] || "draft";
+          setPublishStatus(status);
+        }
+      } catch (e) {
+        console.error("Failed to load publish status", e);
+      }
+    };
+    loadPublishStatus();
+  }, [productId, locale]);
 
   // Sync with external hidden state
   React.useEffect(() => {
@@ -162,6 +187,7 @@ export default function InlineProductArticleEditor({
         }
         setDirty(false);
         setSaveStatus("Saved");
+        setPublishStatus(opts?.publish ? "published" : "draft");
         onSaved?.();
       } catch (e) {
         console.error(e);
@@ -275,22 +301,44 @@ export default function InlineProductArticleEditor({
   );
 
   const ActionArea = (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => handleSave(undefined, { publish: false })}
-        className="btn-secondary btn-sm"
+    <div className="flex items-center gap-3">
+      {/* Status Badge */}
+      <AppleBadge 
+        variant={publishStatus === "published" ? "success" : "warning"}
+        className="text-xs"
+      >
+        {publishStatus === "published" ? tr("article.public", "Public") : tr("article.draft", "Draft")}
+      </AppleBadge>
+      
+      {/* Action Buttons */}
+      {publishStatus === "published" ? (
+        <AppleButton
+          size="sm"
+          variant="secondary"
+          onClick={() => handleSave(undefined, { publish: false })}
+          disabled={saveStatus === "Saving"}
+        >
+          {tr("article.unpublish", "Unpublish")}
+        </AppleButton>
+      ) : (
+        <AppleButton
+          size="sm"
+          variant="primary"
+          onClick={() => handleSave(undefined, { publish: true })}
+          disabled={saveStatus === "Saving"}
+        >
+          {tr("article.publish", "Publish")}
+        </AppleButton>
+      )}
+      
+      <AppleButton
+        size="sm"
+        variant="secondary"
+        onClick={() => handleSave(undefined, { publish: publishStatus === "published" })}
         disabled={saveStatus === "Saving"}
       >
         {saveStatus === "Saving" ? tr("common.saving", "Saving...") : tr("common.save", "Save")}
-      </button>
-      <button
-        onClick={() => handleSave(undefined, { publish: true })}
-        className="btn-primary btn-sm"
-        disabled={saveStatus === "Saving"}
-      >
-        {tr("article.publish", "Publish")}
-      </button>
-      {/* Sem botões de abrir/sair fullscreen visíveis */}
+      </AppleButton>
     </div>
   );
 

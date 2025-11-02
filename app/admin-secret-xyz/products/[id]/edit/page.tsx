@@ -8,11 +8,15 @@ import ProductCard from '../../../../../components/ProductCard';
 import ReviewsManager from '../../../../../components/ReviewsManager';
 import ReviewsCarousel from '../../../../../components/ReviewsCarousel';
 import ReviewsMarquee from '../../../../../components/ReviewsMarquee';
+import CategoryChipsInput from '../../../../../components/CategoryChipsInput';
 import { useToast } from '@/components/ToastProvider';
 import { useLanguage } from '@/components/LanguageProvider';
 import { generateSlug } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleBadge, type SaveStatus } from '@/components/ui/apple-badge';
+import { AppleCard } from '@/components/ui/apple-card';
 
 const InlineProductArticleEditor = dynamic(() => import('@/components/InlineProductArticleEditor'), { ssr: false });
 
@@ -48,7 +52,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
   const reviewsCfgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Estado de edição de links (acordeão + autosave)
   const [expandedLink, setExpandedLink] = useState<number | null>(null);
-  const [savingLinks, setSavingLinks] = useState(false);
+  const [linksSaveStatus, setLinksSaveStatus] = useState<SaveStatus>('saved');
   const [lastSavedLinksAt, setLastSavedLinksAt] = useState<Date | null>(null);
   // Tags (chips) + input atual
   const [tagsList, setTagsList] = useState<string[]>([]);
@@ -349,9 +353,10 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
   useEffect(() => {
     if (isLoading) return;
     if (isInitialLoad.current) { isInitialLoad.current = false; return; }
+    setLinksSaveStatus('editing');
     const timer = setTimeout(async () => {
       try {
-        setSavingLinks(true);
+        setLinksSaveStatus('saving');
         const url = `/api/products/${params.id}`;
         await fetch(url, {
           method: 'PATCH',
@@ -359,10 +364,10 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
           body: JSON.stringify({ links: formData.links }),
         });
         setLastSavedLinksAt(new Date());
+        setLinksSaveStatus('saved');
       } catch (e) {
         console.error('Autosave (links) failed', e);
-      } finally {
-        setSavingLinks(false);
+        setLinksSaveStatus('failed');
       }
     }, 800);
     return () => clearTimeout(timer);
@@ -463,30 +468,30 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="space-y-6 lg:col-span-2">
         {/* Title */}
-        <div className="bg-card/70 backdrop-blur-md border border-border rounded-xl p-6">
+        <AppleCard variant="glass" className="p-6">
           <label className="block text-sm font-medium mb-3 text-foreground">{t('editor.title') || 'Title'}</label>
           <textarea
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full p-3 rounded-md bg-background border border-border text-foreground resize-y min-h-[60px]"
+            className="w-full p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-black/10 dark:border-white/20 text-foreground resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 backdrop-blur-xl"
             placeholder={t('editor.titlePlaceholder') || 'Enter product title...'}
             required
           />
-        </div>
+        </AppleCard>
 
         {/* Summary */}
-        <div className="bg-card/70 backdrop-blur-md border border-border rounded-xl p-6">
+        <AppleCard variant="glass" className="p-6">
           <label className="block text-sm font-medium mb-3 text-foreground">
             {t('editor.cardSummary') || 'Card Summary'}
           </label>
           <textarea
             value={formData.summary}
             onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-            className="w-full p-3 rounded-md bg-background border border-border text-foreground resize-y min-h-[80px]"
+            className="w-full p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-black/10 dark:border-white/20 text-foreground resize-y min-h-[80px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 backdrop-blur-xl"
             placeholder={t('editor.summaryPlaceholder') || 'Brief description that will appear on the product card...'}
             required
           />
-        </div>
+        </AppleCard>
 
         {/* Product Article Editor (inline, premium) */}
         <div className="bg-card/50 backdrop-blur-xl border border-border/40 rounded-2xl overflow-hidden shadow-sm">
@@ -538,79 +543,27 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
         </div>
         {/* (Removido) Controles antigos de imagem — agora ficam dentro do Preview Card */}
 
-        {/* Category */}
-        <div className="bg-card/70 backdrop-blur-md border border-border rounded-xl p-6">
-          <label className="block text-sm font-medium mb-2 text-foreground">{t('editor.category') || 'Category'}</label>
-          <div className="flex gap-2">
-            <select
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="w-full p-2 rounded-md bg-background border border-border text-foreground"
-              required
-            >
-              <option value="">{t('editor.selectCategory') || 'Select a category'}</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* Quick suggestions based on title */}
-          {suggestions.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setNewCategory(s.charAt(0).toUpperCase() + s.slice(1))}
-                  className="px-2 py-1 text-xs rounded-full border border-border text-foreground/80 hover:bg-card/60"
-                >
-                  {t('editor.suggest') || 'Suggest'}: {s}
-                </button>
-              ))}
-            </div>
-          )}
-          {/* Create new category inline */}
-          <div className="mt-2 flex gap-2">
-            <input
-              type="text"
-              value={newCategory}
-              onChange={(e) => setNewCategory(capFirst(e.target.value))}
-              placeholder={t('editor.newCategory') || 'New category'}
-              className="flex-1 p-2 rounded-md bg-background border border-border text-foreground"
-            />
-            <button
-              type="button"
-              disabled={creatingCategory || !newCategory.trim()}
-              onClick={async () => {
-                try {
-                  setCreatingCategory(true);
-                  const res = await fetch('/api/categories', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: capFirst(newCategory.trim()) }),
-                  });
-                  if (!res.ok) throw new Error('Failed to create category');
-                  const created = await res.json();
-                  setCategories((prev) => [...prev, created]);
-                  setFormData((fd) => ({ ...fd, categoryId: created.id }));
-                  setNewCategory('');
-                } catch (e) {
-                  setError(t('editor.errorCreatingCategory') || 'Could not create category');
-                } finally {
-                  setCreatingCategory(false);
-                }
-              }}
-              className="px-3 py-2 rounded-md bg-foreground text-background disabled:opacity-50"
-            >
-              {creatingCategory ? (t('editor.creating') || 'Creating...') : (t('editor.createAndSelect') || 'Create & Select')}
-            </button>
-          </div>
-        </div>
+        {/* Category (chips-like selector) */}
+        <AppleCard variant="glass" className="p-6">
+          <label className="block text-sm font-medium mb-3 text-foreground">{t('editor.category') || 'Category'}</label>
+          <CategoryChipsInput
+            categories={categories}
+            value={formData.categoryId}
+            onChange={(id)=> setFormData((fd)=> ({ ...fd, categoryId: id }))}
+            onCreate={async (name: string) => {
+              const res = await fetch('/api/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+              if (!res.ok) throw new Error('Failed to create category');
+              const created = await res.json();
+              setCategories((prev)=> [...prev, created]);
+              return created;
+            }}
+            locale={locale}
+            titleSuggestions={suggestions.map((s)=> s.charAt(0).toUpperCase() + s.slice(1))}
+          />
+        </AppleCard>
 
         {/* Internal Tags (chips with Apple-like blue, comma/Enter to add, autosave) */}
-        <div className="bg-card/70 backdrop-blur-md border border-border rounded-xl p-6">
+        <AppleCard variant="glass" className="p-6">
           <label className="block text-sm font-medium mb-2 text-foreground">{t('editor.internalTags') || 'Internal Tags'}</label>
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-background p-2">
             {tagsList.map((tag) => (
@@ -643,10 +596,10 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
             />
           </div>
           <p className="mt-1 text-xs text-foreground/60">{t('editor.tagsNote') || 'Used only to relate similar products. Will not be displayed on the site.'}</p>
-        </div>
+        </AppleCard>
 
         {/* Reviews Display Configuration (Admin) */}
-        <div className="bg-gradient-to-b from-card/80 to-card/60 backdrop-blur-xl border border-border/40 rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] p-6 transition-all hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
+        <AppleCard variant="premium" className="p-6">
           <div className="text-center mb-6">
             <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide bg-gradient-to-b from-foreground/12 to-foreground/8 text-foreground/90 shadow-sm">
               {t('editor.reviewsDisplay') || 'Reviews Display (Public)'}
@@ -753,15 +706,13 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
               })()}
             </div>
           </div>
-        </div>
+        </AppleCard>
 
         {/* Links (Minimalist accordion, autosave and store badge) */}
-        <div className="bg-card/70 backdrop-blur-md border border-border rounded-xl p-6">
+        <AppleCard variant="glass" className="p-6">
           <div className="flex items-center justify-between gap-2 mb-3">
             <span className="block text-sm font-medium text-foreground">{t('editor.affiliateLinks') || 'Affiliate Links'}</span>
-            <div className="text-xs text-foreground/60">
-              {savingLinks ? (t('common.saving') || 'Saving…') : lastSavedLinksAt ? (t('common.autoSaved') || 'Auto-saved') : '—'}
-            </div>
+            <AppleBadge status={linksSaveStatus} />
           </div>
           <div className="space-y-3">
             {formData.links.map((link, index) => {
@@ -841,51 +792,53 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
             })}
           </div>
           <div className="mt-3 flex justify-end">
-            <button
+            <AppleButton
               type="button"
+              variant="primary"
+              size="sm"
               onClick={addLink}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm"
             >
               <PlusCircle className="w-4 h-4" />
               {t('editor.addLink') || 'Add Link'}
-            </button>
+            </AppleButton>
           </div>
-        </div>
+        </AppleCard>
 
           {/* Buttons */}
-          <div className="flex gap-4 bg-card/70 backdrop-blur-md border border-border rounded-xl p-6">
-            <button
+          <AppleCard variant="glass" className="flex gap-4 p-6">
+            <AppleButton
               type="submit"
+              variant="primary"
               disabled={isLoading}
+              loading={isLoading}
               onClick={(e)=>{ lastClickPos.current = { x: e.clientX, y: e.clientY }; }}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
             >
-              {isLoading ? (t('common.saving') || 'Saving...') : t('common.save')}
-            </button>
-            <button
+              {t('common.save') || 'Save'}
+            </AppleButton>
+            <AppleButton
               type="button"
+              variant="secondary"
               onClick={() => router.back()}
-              className="px-4 py-2 rounded-md bg-background border border-border text-foreground hover:bg-card/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
             >
-              {t('common.cancel')}
-            </button>
+              {t('common.cancel') || 'Cancel'}
+            </AppleButton>
             {params.id !== 'novo' && (
-              <button
+              <AppleButton
                 type="button"
+                variant="danger"
                 onClick={(e)=>handleDeleteProduct(e)}
-                className="ml-auto px-4 py-2 rounded-md border border-red-400/40 bg-red-500/10 text-red-600 hover:bg-red-500/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30"
-                aria-label={t('common.deleteProduct') || 'Delete product'}
+                className="ml-auto"
               >
                 {t('common.deleteProduct') || 'Delete Product'}
-              </button>
+              </AppleButton>
             )}
-          </div>
+          </AppleCard>
         </div>
 
         {/* Preview Card (Apple-like) */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 space-y-6">
-            <div className="bg-gradient-to-b from-card/80 to-card/60 backdrop-blur-xl border border-border/40 rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] p-6 transition-all hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
+            <AppleCard variant="premium" className="p-6">
               <div className="text-center mb-5">
                 <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide bg-gradient-to-b from-foreground/12 to-foreground/8 text-foreground/90 shadow-sm">
                   {t('chip.cardPreview')}
@@ -949,13 +902,13 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                 {/* input oculto para clique */}
                 <input id="editar-hidden-file" type="file" accept="image/*" className="hidden" onChange={async (e)=>{ const f=e.target.files?.[0]; if(f) openCropWithFile(f); e.currentTarget.value=''; }} />
               </div>
-            </div>
+            </AppleCard>
           </div>
 
           {/* Modal de recorte */}
           {isCropOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <div className="bg-card/70 backdrop-blur-md rounded-xl shadow-xl w-full max-w-xl p-4 border border-border">
+              <AppleCard variant="glass" className="w-full max-w-xl p-4">
                 <h3 className="font-semibold mb-3 text-foreground">{t('image.adjust') || 'Adjust Image'}</h3>
                 <div className="relative w-full aspect-square bg-background rounded-md overflow-hidden">
                   <Cropper
@@ -973,34 +926,34 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                     <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e)=>setZoom(Number(e.target.value))} className="ml-2 align-middle" />
                   </label>
                   <div className="ml-auto flex gap-2">
-                    <button type="button" className="px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground hover:bg-card/60" onClick={()=>setIsCropOpen(false)}>{t('common.cancel')}</button>
-                    <button type="button" className="px-3 py-2 text-sm rounded-md bg-foreground text-background hover:opacity-90" onClick={confirmCropAndUpload}>{t('common.save')}</button>
+                    <AppleButton type="button" variant="secondary" onClick={()=>setIsCropOpen(false)}>{t('common.cancel')}</AppleButton>
+                    <AppleButton type="button" variant="primary" onClick={confirmCropAndUpload}>{t('common.save')}</AppleButton>
                   </div>
                 </div>
-              </div>
+              </AppleCard>
             </div>
           )}
           {/* Reviews Manager below Preview (Apple-like header) */}
-          <div className="mt-10 bg-gradient-to-b from-card/80 to-card/60 backdrop-blur-xl rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-border/40 p-6 transition-all hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
+          <AppleCard variant="premium" className="mt-10 p-6">
             <div className="text-center mb-5">
               <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide bg-gradient-to-b from-foreground/12 to-foreground/8 text-foreground/90 shadow-sm">{t('chip.reviewsEditor') || 'Reviews Editor'}</span>
               <div className="mt-3 text-[13px] leading-relaxed text-foreground/60">{t('reviews.subtitle') || 'Manage product reviews'}</div>
               <div className="mt-4 flex items-center justify-center">
-                <button
+                <AppleButton
                   type="button"
-                  className="inline-flex items-center gap-2 text-[13px] font-medium px-5 py-2.5 rounded-xl bg-gradient-to-b from-foreground to-foreground/90 text-background shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.16)] active:scale-[0.98] transition-all"
+                  variant="primary"
                   onClick={() => setIsImportOpen(true)}
                 >
                   {t('btn.importFromPrimary') || 'Import Reviews'}
-                </button>
+                </AppleButton>
               </div>
               {/* Modal de importação */}
               {isImportOpen && (
                 <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/50">
-                  <div className="w-full max-w-md rounded-2xl bg-card/80 backdrop-blur-xl border border-border/60 shadow-[0_8px_30px_rgba(0,0,0,0.2)] overflow-hidden">
+                  <AppleCard variant="glass" className="w-full max-w-md overflow-hidden">
                     <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
                       <h5 className="text-sm font-semibold text-foreground">{t('chip.reviewsEditor') || 'Reviews Editor'}</h5>
-                      <button onClick={()=> setIsImportOpen(false)} className="text-foreground/60 hover:text-foreground text-sm px-2 py-1 rounded-md hover:bg-foreground/5">{t('common.close') || 'Close'}</button>
+                      <AppleButton variant="ghost" size="sm" onClick={()=> setIsImportOpen(false)}>{t('common.close') || 'Close'}</AppleButton>
                     </div>
                     <div className="p-5 space-y-3">
                       <button
@@ -1094,7 +1047,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                         </div>
                       </button>
                     </div>
-                  </div>
+                  </AppleCard>
                 </div>
               )}
 
@@ -1103,7 +1056,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
               initialReviews={reviews}
               onReviewsChange={(r)=> setReviews(r)}
             />
-          </div>
+          </AppleCard>
         </div>
       </form>
     </div>

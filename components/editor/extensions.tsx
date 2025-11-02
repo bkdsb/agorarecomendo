@@ -155,8 +155,9 @@ const markdownExtension = Markdown.configure({
   bulletListMarker: "-",
   linkify: false,
   breaks: false,
-  transformPastedText: false,
-  transformCopiedText: false,
+  // Converte automaticamente Markdown ao colar/copiar texto puro
+  transformPastedText: true,
+  transformCopiedText: true,
 });
 
 export const defaultExtensions = [
