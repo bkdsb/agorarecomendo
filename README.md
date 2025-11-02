@@ -6,6 +6,31 @@
 
 ---
 
+## ⚡ TL;DR para ir online em 10 minutos
+
+1) Crie o banco (Supabase recomendado) e copie a Connection String (Postgres URI).
+
+2) No painel do Vercel, adicione as variáveis de ambiente:
+- `DATABASE_URL` (use a URI completa do Supabase)
+- `NEXTAUTH_SECRET` (valor aleatório forte)
+- `NEXTAUTH_URL` (ex.: `https://seu-dominio.vercel.app`)
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `ADMIN_EMAILS` (e-mails que terão acesso ao admin)
+- `RAINFOREST_API_KEY` (opcional)
+
+3) Em Google Cloud Console, inclua o Redirect URI:
+`https://seu-dominio.vercel.app/api/auth/callback/google`
+
+4) No Vercel, faça o deploy. As migrações do Prisma podem ser aplicadas com `npx prisma migrate deploy` (veja seção de Database). 
+
+5) Acesse `/admin-secret-xyz` e faça login com um e-mail presente em `ADMIN_EMAILS`.
+
+6) Crie categorias, cadastre produtos, adicione links de afiliado e publique.
+
+Se precisar de referência detalhada, veja as seções “Deployment” e “Installation Guide”.
+
+---
+
 ## 🎯 **Why AgoraRecomendo?**
 
 ### **For Affiliate Marketers & Content Creators**
@@ -28,6 +53,7 @@
 
 ### **Content Management**
 - **Rich Text Editor**: TipTap-powered with color, fonts, highlights, images, links, task lists, and AI-powered article generation
+- **Apple-like Design System**: Botões, badges e cards unificados (AppleButton, AppleBadge, AppleCard) com glass/blur/gradients
 - **Multi-Locale Products**: Separate titles, summaries, and articles for EN-US and PT-BR
 - **Smart Slug Generation**: Automatic locale-aware URLs with `br-` prefix for Portuguese content
 - **Category Translations**: Display category names in user's language (namePtBr field for PT-BR)
@@ -42,6 +68,11 @@
 - **Multi-Store Support**: Add multiple affiliate links per product (Amazon.com, Amazon.com.br, etc.)
 - **Automatic Selection**: System picks the correct link based on user's locale toggle
 - **Flexible Matching**: Normalizes locale variants (pt-BR, pt-br, pt, br → PT-BR; en-US, en-us, en, us → EN-US)
+
+### **Inline Editor (Artigo do Produto)**
+- **Draft/Public**: Badge e fluxo de publicação por idioma (EN-US e PT-BR) com persistência em `scrapedQnA.articleStatus`
+- **Autosave + Badges**: Estados “Saved/Editing/Saving/Failed” exibidos via AppleBadge
+- **Fullscreen Notion‑style**: Atalhos de teclado (⌘S salva, ⌘⇧E alterna fullscreen, Esc sai)
 
 ### **Admin Panel**
 - **Protected Access**: NextAuth with Google OAuth + email whitelist (ADMIN_EMAILS)
@@ -67,6 +98,7 @@
 - **Editor**: TipTap 3.9.1 (color, font-family, highlight, image, link, placeholder, task-list, underline)
 - **State**: React Context (LanguageProvider, ThemeProvider, ToastProvider)
 - **UI Components**: Custom button, separator, and editor components with shadcn/ui inspiration
+  - Apple-like UI: `components/ui/apple-button.tsx`, `components/ui/apple-badge.tsx`, `components/ui/apple-card.tsx`
 
 ### **Backend**
 - **Runtime**: Node.js 18+ (serverless-ready)
@@ -75,6 +107,7 @@
 - **APIs**: RESTful endpoints for products, categories, reviews, scraping, translation, upload
 - **Sanitization**: sanitize-html 2.17.0 for XSS protection
 - **Image Upload**: Local storage to `public/uploads/` with automatic directory creation
+  - Dica de produção: para ambientes serverless, considere um provedor de storage (S3, R2) e mude o endpoint de upload
 
 ### **Third-Party Integrations**
 - **Rainforest API**: Optional Amazon product data fetching by ASIN/URL
@@ -178,7 +211,18 @@ cp .env.example .env
 5. Paste into `.env`:
 
 ```env
-DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+# Exemplo: (Connection Pooling para produção)
+DATABASE_URL="postgresql://USER:PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+```
+
+Obs.: Se sua senha tiver caracteres especiais (ex.: `@`), a URI do Supabase já vem percent-encodada e pode ser usada diretamente. Para evitar problemas locais, você também pode definir variáveis separadas e o script de backup irá priorizá‑las:
+
+```env
+DB_HOST="db.gagphauyavcttfngddhl.supabase.co"
+DB_PORT="5432"
+DB_NAME="postgres"
+DB_USER="postgres"
+DB_PASSWORD="sua_senha_exata"
 ```
 
 **Alternative**: Use any PostgreSQL provider (Neon, Railway, local Postgres)
@@ -344,12 +388,18 @@ git push origin main
    - `ADMIN_EMAILS`
    - `RAINFOREST_API_KEY` (optional)
 
-4. Update **Google OAuth** redirect URI:
+  4. Banco de dados no Vercel / Serverless: use a Connection String de Connection Pooling da Supabase (pgbouncer). Em Supabase, copie a URI de “Pooling” para produção. Em seguida, aplique as migrações:
+
+  ```bash
+  npx prisma migrate deploy
+  ```
+
+  5. Update **Google OAuth** redirect URI:
    - Go to [Google Cloud Console](https://console.cloud.google.com/) > **APIs & Services** > **Credentials**
    - Edit your OAuth 2.0 Client ID
    - Add `https://your-production-domain.vercel.app/api/auth/callback/google` to **Authorized redirect URIs**
 
-5. Deploy:
+6. Deploy:
 
 ```bash
 vercel --prod
@@ -417,6 +467,17 @@ npm run db:restore   # (Custom) Restore database from SQL file
 npm run db:deploy    # Alias for prisma migrate deploy
 npm run db:pull      # Pull database schema to Prisma schema
 npm run db:generate  # Alias for prisma generate
+
+```
+
+### Backup & Restore (Supabase)
+
+```bash
+# Backup (usa DATABASE_URL ou DB_* vars). Gera arquivo em supabase/backups/
+npm run db:backup
+
+# Restore (aponta para um .sql gerado)
+npm run db:restore -- supabase/backups/backup-YYYYMMDD-HHMMSS.sql
 ```
 
 ---
@@ -523,6 +584,18 @@ images: {
 ```
 
 3. Restart dev server
+
+---
+
+### **Issue: "Backup gera arquivo 0 bytes"**
+
+**Causa**: Falha de autenticação no banco ou senha com caracteres especiais não parseada.
+
+**Solução**:
+
+1. Prefira a Connection String oficial do Supabase (a senha já vem codificada)
+2. Opcional: defina `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` no `.env`
+3. Rode novamente: `npm run db:backup`
 
 ---
 
