@@ -17,12 +17,15 @@ import ptBR from '../../../lib/locales/pt-BR.json';
 // Editor inline removido desta página — edição movida para o admin
 
 interface Props {
-  params: { slug: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function ProductArticlePage({ params, searchParams }: Props) {
   const session = await getServerSession(authOptions);
+  
+  // Await params in Next.js 16+
+  const { slug } = await params;
   
   // Get user locale from cookie
   const cookieStore = await cookies();
@@ -31,7 +34,7 @@ export default async function ProductArticlePage({ params, searchParams }: Props
   const t = (key: string) => messages[userLocale]?.[key] ?? key;
   
   const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: { category: true, links: true, reviews: true },
   });
 
