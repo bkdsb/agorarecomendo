@@ -1,13 +1,18 @@
 /**
  * Configuração do Next.js. Este arquivo está em formato .mjs (JavaScript Module)
  */
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const config = {
   // Garantir que a renderização seja estrita
   reactStrictMode: true,
   // Definir explicitamente a raiz para o Turbopack quando houver múltiplos lockfiles no workspace
   turbopack: {
-    // Usar o diretório atual (raiz do app Next.js)
-    root: '.',
+    // Caminho absoluto da raiz do app Next.js
+    root: __dirname,
   },
 
   // Configuração para permitir o carregamento de imagens de domínios externos
