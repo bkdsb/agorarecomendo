@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "db:backup": "bash ./scripts/db-backup.sh",
     "db:restore": "bash ./scripts/db-restore.sh",
     "lint": "eslint",
