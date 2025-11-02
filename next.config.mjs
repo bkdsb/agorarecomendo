@@ -4,6 +4,11 @@
 const config = {
   // Garantir que a renderização seja estrita
   reactStrictMode: true,
+  // Definir explicitamente a raiz para o Turbopack quando houver múltiplos lockfiles no workspace
+  turbopack: {
+    // Usar o diretório atual (raiz do app Next.js)
+    root: '.',
+  },
 
   // Configuração para permitir o carregamento de imagens de domínios externos
   images: {
