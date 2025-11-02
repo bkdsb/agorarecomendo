@@ -14,8 +14,8 @@ export default async function AdminDashboardPage() {
   const bannersCount = await prisma.banner.count();
 
   // Server-side locale detection and simple translator
-  const cookieStore = cookies();
-  const hdrs = headers();
+  const cookieStore = await cookies();
+  const hdrs = await headers();
   const cookieLocale = cookieStore.get('locale')?.value as 'en-US' | 'pt-BR' | undefined;
   let locale: 'en-US' | 'pt-BR' = 'en-US';
   if (cookieLocale) {

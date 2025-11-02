@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { cleanHtml } from '@/lib/sanitize';
 import { getServerSession } from 'next-auth';
@@ -18,19 +18,18 @@ async function ensureUniqueSlug(base: string, excludeId?: string): Promise<strin
 
 // GET /api/products/[id] - Busca um produto específico
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const product = await prisma.product.findUnique({
-      where: {
-        id: params.id,
-      },
+      where: { id },
       include: {
         category: true,
         links: true,
@@ -50,10 +49,11 @@ export async function GET(
 
 // PATCH /api/products/[id] - Atualiza um produto
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return new NextResponse('Unauthorized', { status: 401 });
@@ -71,7 +71,7 @@ export async function PATCH(
       const firstLinkLocale = links?.[0]?.locale || 'en-us';
       const productLocale = (firstLinkLocale === 'pt-br' ? 'pt-BR' : 'en-US') as 'en-US' | 'pt-BR';
       const base = generateSlug(title, productLocale);
-      slugUpdate = await ensureUniqueSlug(base, params.id);
+      slugUpdate = await ensureUniqueSlug(base, id);
     }
 
     // Se 'links' foi enviado, processa somente se houver pelo menos 1 link válido (com URL).
@@ -81,13 +81,13 @@ export async function PATCH(
       : undefined;
     const shouldReplaceLinks = Array.isArray(links) && (validLinks?.length ?? 0) > 0;
     if (shouldReplaceLinks) {
-      await prisma.affiliateLink.deleteMany({ where: { productId: params.id } });
+  await prisma.affiliateLink.deleteMany({ where: { productId: id } });
     }
 
     // Process reviews replacement if provided (allow clearing by sending empty array)
     const replaceReviews = Array.isArray(reviews);
     if (replaceReviews) {
-      await prisma.review.deleteMany({ where: { productId: params.id } });
+  await prisma.review.deleteMany({ where: { productId: id } });
     }
 
     // Se reviews foi enviado, deduplicar dentro do payload para evitar persistir duplicadas
@@ -115,7 +115,7 @@ export async function PATCH(
     }
 
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title !== undefined ? { title } : {}),
         ...(summary !== undefined ? { summary } : {}),
@@ -172,28 +172,21 @@ export async function PATCH(
 
 // DELETE /api/products/[id] - Deleta um produto
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     // Primeiro, remove todos os links
-    await prisma.affiliateLink.deleteMany({
-      where: {
-        productId: params.id,
-      },
-    });
+    await prisma.affiliateLink.deleteMany({ where: { productId: id } });
 
     // Então remove o produto
-    await prisma.product.delete({
-      where: {
-        id: params.id,
-      },
-    });
+    await prisma.product.delete({ where: { id } });
 
     return new NextResponse('Produto deletado com sucesso', { status: 200 });
   } catch (error) {

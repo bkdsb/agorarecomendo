@@ -6,14 +6,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../lib/auth';
 import ParallaxLayer from '../../../components/ParallaxLayer';
 import Header from '../../../components/Header';
-import dynamic from 'next/dynamic';
+import ReviewsCarousel from '../../../components/ReviewsCarousel';
+import ReviewsMarquee from '../../../components/ReviewsMarquee';
+import LiveArticleRender from '../../../components/LiveArticleRender';
 import { cookies } from 'next/headers';
 import { getLocalizedAffiliateLink } from '@/lib/localeLinks';
 import enUS from '../../../lib/locales/en-US.json';
 import ptBR from '../../../lib/locales/pt-BR.json';
 
-const ReviewsCarousel = dynamic(() => import('../../../components/ReviewsCarousel'), { ssr: false });
-const ReviewsMarquee = dynamic(() => import('../../../components/ReviewsMarquee'), { ssr: false });
 // Editor inline removido desta página — edição movida para o admin
 
 interface Props {
@@ -25,8 +25,8 @@ export default async function ProductArticlePage({ params, searchParams }: Props
   const session = await getServerSession(authOptions);
   
   // Get user locale from cookie
-  const cookieStore = cookies();
-  const userLocale = (cookieStore.get('locale')?.value as 'en-US' | 'pt-BR') || 'en-US';
+  const cookieStore = await cookies();
+  const userLocale = ((cookieStore.get('locale')?.value) as 'en-US' | 'pt-BR') || 'en-US';
   const messages: Record<'en-US'|'pt-BR', Record<string,string>> = { 'en-US': enUS as any, 'pt-BR': ptBR as any };
   const t = (key: string) => messages[userLocale]?.[key] ?? key;
   
@@ -171,7 +171,7 @@ export default async function ProductArticlePage({ params, searchParams }: Props
         {/* Logo and edit shortcut now in Header */}
         {hasArticle ? (
           // Client preview that updates live when editing inline
-          React.createElement(require('../../../components/LiveArticleRender').default, { initialHtml: article })
+          <LiveArticleRender initialHtml={article} />
         ) : hasSummary ? (
           <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-6">
             <h2 className="text-xl font-semibold mb-2">{t('product.summaryHeading') || 'Summary'}</h2>

@@ -1,19 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import prisma from '../../../../../lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../../../lib/auth';
 
 // GET /api/products/[id]/reviews - lista reviews de um produto
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const session = await getServerSession(authOptions);
     if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
     const reviews = await prisma.review.findMany({
-      where: { productId: params.id },
+      where: { productId: id },
       orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json(reviews);
@@ -24,10 +25,11 @@ export async function GET(
 
 // POST /api/products/[id]/reviews - cria uma review manual
 export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     const session = await getServerSession(authOptions);
     if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
@@ -38,7 +40,7 @@ export async function POST(
 
     const review = await prisma.review.create({
       data: {
-        productId: params.id,
+        productId: id,
         author: author || null,
         rating: typeof rating === 'number' ? rating : null,
         content: content.trim(),

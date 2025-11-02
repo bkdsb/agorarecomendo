@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 // 2. Transformamos a Home em uma função "async"
 export default async function Home() {
   // Get user locale from cookie to filter links
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const userLocale = (cookieStore.get('locale')?.value as 'en-US' | 'pt-BR') || 'en-US';
 
   // 3. BUSCA DE DADOS REAIS (COM O NOME CORRIGIDO)

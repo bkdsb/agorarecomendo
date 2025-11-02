@@ -20,15 +20,15 @@ export const metadata: Metadata = {
   description: "The best recommendations, carefully selected.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   // Detect locale from cookie or Accept-Language (server-side)
   // Priority: cookie > geolocation (via CF-IPCountry header) > Accept-Language
-  const cookieStore = cookies();
-  const hdrs = headers();
+  const cookieStore = await cookies();
+  const hdrs = await headers();
   const cookieLocale = cookieStore.get('locale')?.value as 'en-US' | 'pt-BR' | undefined;
   let detected: 'en-US' | 'pt-BR' = 'en-US';
   
