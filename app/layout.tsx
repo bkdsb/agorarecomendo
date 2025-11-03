@@ -15,37 +15,88 @@ import { cookies, headers } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "AgoraRecomendo",
-  description: "The best recommendations, carefully selected.",
-};
+// Função para detectar locale (reutilizável)
+async function detectLocale(): Promise<'en-US' | 'pt-BR'> {
+  const cookieStore = await cookies();
+  const hdrs = await headers();
+  const cookieLocale = cookieStore.get('locale')?.value as 'en-US' | 'pt-BR' | undefined;
+  
+  if (cookieLocale) {
+    return cookieLocale;
+  }
+  
+  const cfCountry = hdrs.get('cf-ipcountry') || hdrs.get('x-vercel-ip-country') || '';
+  const al = hdrs.get('accept-language') || '';
+  
+  if (cfCountry === 'BR' || /pt-BR|pt\b/i.test(al)) {
+    return 'pt-BR';
+  }
+  
+  return 'en-US';
+}
+
+// Metadados dinâmicos baseados no locale
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await detectLocale();
+  
+  const metadata = {
+    'en-US': {
+      title: "AR Recommends",
+      description: "The best recommendations, carefully selected.",
+      applicationName: "AR Recommends",
+      keywords: ["recommendations", "products", "reviews", "shopping", "amazon"],
+    },
+    'pt-BR': {
+      title: "AgoraRecomendo",
+      description: "As melhores recomendações, cuidadosamente selecionadas.",
+      applicationName: "AgoraRecomendo",
+      keywords: ["recomendações", "produtos", "avaliações", "compras", "amazon"],
+    },
+  };
+  
+  const content = metadata[locale];
+  
+  return {
+    title: content.title,
+    description: content.description,
+    applicationName: content.applicationName,
+    keywords: content.keywords,
+    icons: {
+      icon: [
+        { url: '/favicon.ico' },
+        { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+        { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      ],
+      apple: [
+        { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      ],
+      other: [
+        { rel: 'android-chrome', url: '/android-chrome-192x192.png', sizes: '192x192' },
+        { rel: 'android-chrome', url: '/android-chrome-512x512.png', sizes: '512x512' },
+      ],
+    },
+    manifest: locale === 'pt-BR' ? '/site-pt.webmanifest' : '/site-en.webmanifest',
+    openGraph: {
+      title: content.title,
+      description: content.description,
+      type: 'website',
+      locale: locale,
+      siteName: content.applicationName,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: content.title,
+      description: content.description,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Detect locale from cookie or Accept-Language (server-side)
-  // Priority: cookie > geolocation (via CF-IPCountry header) > Accept-Language
-  const cookieStore = await cookies();
-  const hdrs = await headers();
-  const cookieLocale = cookieStore.get('locale')?.value as 'en-US' | 'pt-BR' | undefined;
-  let detected: 'en-US' | 'pt-BR' = 'en-US';
-  
-  if (cookieLocale) {
-    detected = cookieLocale;
-  } else {
-    // Check Cloudflare country header (if deployed on Cloudflare/Vercel)
-    const cfCountry = hdrs.get('cf-ipcountry') || hdrs.get('x-vercel-ip-country') || '';
-    // Check Accept-Language header
-    const al = hdrs.get('accept-language') || '';
-    
-    // If country is Brazil, default to pt-BR
-    if (cfCountry === 'BR' || /pt-BR|pt\b/i.test(al)) {
-      detected = 'pt-BR';
-    }
-  }
-  
+  const detected = await detectLocale();
   const messages = { 'en-US': enUS, 'pt-BR': ptBR } as const;
   return (
     <html lang={detected} suppressHydrationWarning>
