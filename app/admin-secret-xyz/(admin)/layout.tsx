@@ -2,11 +2,12 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../lib/auth';
 
-// Layout raiz do admin - apenas verifica autenticação, sem sidebar
-export default async function AdminRootLayout({ children }: { children: React.ReactNode }) {
+import AdminLayoutClient from "../../components/AdminLayout";
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   if (!session) {
     redirect('/api/auth/signin');
   }
-  return <>{children}</>;
+  return <AdminLayoutClient>{children}</AdminLayoutClient>;
 }
