@@ -99,6 +99,7 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
         placement: opts.placement,
       });
       sessionStorage.setItem('__pending_toast', payload);
+      sessionStorage.setItem('__toast_timestamp', Date.now().toString());
     } catch {}
   }, []);
 
@@ -165,36 +166,39 @@ export function useToast() {
 
 function ToastCard({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const { id, title, description, type, confirmText, cancelText, resolve } = toast;
-  const icon = type === 'success' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-    : type === 'error' ? <AlertTriangle className="h-4 w-4 text-red-500" />
-    : type === 'warning' ? <AlertTriangle className="h-4 w-4 text-amber-500" />
-    : type === 'loading' ? <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-    : <Info className="h-4 w-4 text-blue-500" />;
-
-  const bg = type === 'error' ? 'border-red-500/30' : type === 'success' ? 'border-emerald-500/30' : 'border-white/20';
+  
+  // Premium space-themed icons with subtle colors
+  const icon = type === 'success' ? <CheckCircle2 className="h-4 w-4 text-emerald-500/80" />
+    : type === 'error' ? <AlertTriangle className="h-4 w-4 text-red-500/80" />
+    : type === 'warning' ? <AlertTriangle className="h-4 w-4 text-amber-500/80" />
+    : type === 'loading' ? <Loader2 className="h-4 w-4 animate-spin text-blue-500/80" />
+    : <Info className="h-4 w-4 text-blue-500/80" />;
 
   return (
-    <div className={`pointer-events-auto relative overflow-hidden rounded-xl border ${bg} bg-white/10 backdrop-blur-md shadow-lg shadow-black/10 dark:bg-white/10`}> 
-      <div className="flex items-start gap-3 p-3">
-        <div className="mt-0.5">{icon}</div>
+    <div className="pointer-events-auto relative overflow-hidden rounded-xl backdrop-blur-xl bg-white/80 dark:bg-black/80 border border-black/[0.08] dark:border-white/[0.08] shadow-[0_4px_16px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.6)]">
+      {/* Subtle light reflection */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-transparent dark:from-white/[0.02] pointer-events-none" />
+      
+      <div className="relative flex items-start gap-3 p-4">
+        <div className="mt-0.5 flex-shrink-0">{icon}</div>
         <div className="min-w-0 flex-1">
-          {title && <div className="text-sm font-semibold text-foreground">{title}</div>}
-          {description && <div className="mt-0.5 text-xs text-foreground/80">{description}</div>}
+          {title && <div className="text-sm font-medium text-foreground/90">{title}</div>}
+          {description && <div className="mt-1 text-xs text-foreground/60 leading-relaxed">{description}</div>}
           {type === 'confirm' && (
             <div className="mt-3 flex items-center gap-2">
               <button
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                className="inline-flex items-center justify-center rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600 transition-colors shadow-sm"
                 onClick={() => { resolve?.(true); onClose(); }}
               >{confirmText}</button>
               <button
-                className="inline-flex items-center justify-center rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white/20"
+                className="inline-flex items-center justify-center rounded-lg border border-black/[0.08] dark:border-white/[0.08] bg-white/40 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-foreground/70 hover:bg-white/60 dark:hover:bg-white/[0.08] transition-colors"
                 onClick={() => { resolve?.(false); onClose(); }}
               >{cancelText}</button>
             </div>
           )}
         </div>
         <button
-          className="rounded-md p-1 text-foreground/70 hover:bg-white/10 hover:text-foreground"
+          className="flex-shrink-0 rounded-lg p-1.5 text-foreground/50 hover:text-foreground/80 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
           onClick={() => { resolve?.(false); onClose(); }}
           aria-label="Fechar"
         >
@@ -213,10 +217,23 @@ if (typeof window !== 'undefined') {
       const raw = sessionStorage.getItem('__pending_toast');
       if (!raw) return;
       const data = JSON.parse(raw);
+      
+      // Remove immediately to prevent duplicate toasts on multiple navigations
+      sessionStorage.removeItem('__pending_toast');
+      
+      // Only show if navigating from a different route (check timestamp)
+      const timestamp = sessionStorage.getItem('__toast_timestamp');
+      const now = Date.now();
+      if (timestamp && (now - parseInt(timestamp)) < 500) {
+        // Too soon after setting, likely the same page reload
+        sessionStorage.removeItem('__toast_timestamp');
+        return;
+      }
+      sessionStorage.removeItem('__toast_timestamp');
+      
       // Dispatch a custom event picked up by any mounted provider
       const evt = new CustomEvent('toast:next', { detail: data });
       window.dispatchEvent(evt);
-      sessionStorage.removeItem('__pending_toast');
     } catch {}
   }, 0);
 }

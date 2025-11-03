@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ToastProvider';
 import { useLanguage } from '@/components/LanguageProvider';
 
-export default function DeleteCategoryButton({ categoryId }: { categoryId: string }) {
+export default function DeleteCategoryButton({ categoryId, onDeleted }: { categoryId: string; onDeleted?: (id: string) => void }) {
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -24,9 +24,12 @@ export default function DeleteCategoryButton({ categoryId }: { categoryId: strin
     if (!confirmed) return;
     try {
       setBusy(true);
-      const res = await fetch(`/api/categories/${categoryId}`, { method: 'DELETE' });
+  const res = await fetch(`/api/categories/${categoryId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
-      router.refresh();
+  // Optimistic local update (if parent provided a callback)
+  onDeleted?.(categoryId);
+  // Also trigger a soft refresh as fallback in case other server data depends on it
+  router.refresh();
       toast.success(t('categories.deleted') || 'Category deleted', undefined, { anchor });
     } catch (err) {
       toast.error(t('categories.deleteError') || 'Error deleting category', undefined, { anchor });

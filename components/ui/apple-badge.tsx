@@ -12,39 +12,40 @@ export interface AppleBadgeProps {
   className?: string;
 }
 
+// Premium space-themed colors - subtle and sophisticated
 const statusConfig: Record<SaveStatus, { bg: string; text: string; dot: string; label: string }> = {
   saved: {
-    bg: "bg-gradient-to-b from-emerald-500/10 to-emerald-600/10 border-emerald-500/30",
-    text: "text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
+    bg: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06]",
+    text: "text-emerald-600/80 dark:text-emerald-400/80",
+    dot: "bg-emerald-500/70",
     label: "Saved",
   },
   editing: {
-    bg: "bg-gradient-to-b from-yellow-500/10 to-yellow-600/10 border-yellow-500/30",
-    text: "text-yellow-700 dark:text-yellow-300",
-    dot: "bg-yellow-500",
+    bg: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06]",
+    text: "text-blue-600/80 dark:text-blue-400/80",
+    dot: "bg-blue-500/70",
     label: "Editing",
   },
   saving: {
-    bg: "bg-gradient-to-b from-orange-500/10 to-orange-600/10 border-orange-500/30",
-    text: "text-orange-700 dark:text-orange-300",
-    dot: "bg-orange-500 animate-pulse",
+    bg: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06]",
+    text: "text-blue-600/80 dark:text-blue-400/80",
+    dot: "bg-blue-500/70 animate-pulse",
     label: "Saving",
   },
   failed: {
-    bg: "bg-gradient-to-b from-red-500/10 to-red-600/10 border-red-500/30",
-    text: "text-red-700 dark:text-red-300",
-    dot: "bg-red-500",
+    bg: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06]",
+    text: "text-red-600/80 dark:text-red-400/80",
+    dot: "bg-red-500/70",
     label: "Failed",
   },
 };
 
 const variantConfig: Record<string, string> = {
-  default: "bg-gradient-to-b from-foreground/12 to-foreground/8 border-foreground/20 text-foreground/90",
-  purple: "bg-gradient-to-b from-purple-500/10 to-purple-600/10 border-purple-500/30 text-purple-700 dark:text-purple-300",
-  blue: "bg-gradient-to-b from-blue-500/10 to-blue-600/10 border-blue-500/30 text-blue-700 dark:text-blue-300",
-  success: "bg-gradient-to-b from-emerald-500/10 to-emerald-600/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300",
-  warning: "bg-gradient-to-b from-amber-500/10 to-amber-600/10 border-amber-500/30 text-amber-700 dark:text-amber-300",
+  default: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06] text-foreground/60",
+  purple: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06] text-purple-600/80 dark:text-purple-400/80",
+  blue: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06] text-blue-600/80 dark:text-blue-400/80",
+  success: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06] text-emerald-600/80 dark:text-emerald-400/80",
+  warning: "bg-black/[0.04] dark:bg-white/[0.06] border-black/[0.06] dark:border-white/[0.06] text-amber-600/80 dark:text-amber-400/80",
 };
 
 export function AppleBadge({ status, children, variant = "default", className }: AppleBadgeProps) {

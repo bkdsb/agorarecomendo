@@ -16,6 +16,9 @@ import ptBR from '../../../lib/locales/pt-BR.json';
 
 // Editor inline removido desta página — edição movida para o admin
 
+// Revalidate every 10 seconds to show fresh article status
+export const revalidate = 10;
+
 interface Props {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -57,7 +60,13 @@ export default async function ProductArticlePage({ params, searchParams }: Props
     ? productAny.category.namePtBr
     : product.category?.name;
 
-  const hasArticle = !!article && article.trim().length > 0;
+  // Check article status - only show if published
+  const articleStatus = userLocale === 'pt-BR' 
+    ? (productAny.articleStatusPtBr || 'draft')
+    : (productAny.articleStatus || 'draft');
+  const isArticlePublished = articleStatus === 'published';
+  
+  const hasArticle = isArticlePublished && !!article && article.trim().length > 0;
   const hasSummary = !!summary && summary.trim().length > 0;
 
   // Get localized affiliate link based on user's locale
@@ -140,9 +149,12 @@ export default async function ProductArticlePage({ params, searchParams }: Props
               <h1 className="mt-3 text-4xl md:text-5xl font-bold tracking-tight text-foreground">
                 {title}
               </h1>
-              <p className="mt-4 text-foreground/70 max-w-prose">
-                {summary || (t('product.summaryFallback') || "We analyze thoroughly to recommend only what's worth your time.")}
-              </p>
+              {/* Only show summary in hero if article is published */}
+              {hasArticle && hasSummary && (
+                <p className="mt-4 text-foreground/70 max-w-prose">
+                  {summary}
+                </p>
+              )}
               {primaryLink && (
                 <div className="mt-6 flex items-center gap-3">
                   <a
@@ -169,22 +181,60 @@ export default async function ProductArticlePage({ params, searchParams }: Props
         </div>
       </section>
 
-  {/* CONTENT: Full optimized article */}
+  {/* CONTENT: Adaptive layout based on article status */}
       <section id="detalhes" className="container mx-auto max-w-6xl px-4 md:px-6 pb-20">
-        {/* Logo and edit shortcut now in Header */}
         {hasArticle ? (
-          // Client preview that updates live when editing inline
-          <LiveArticleRender initialHtml={article} />
+          // Scenario 1: Article is PUBLISHED
+          // Show full article with rich content
+          <div className="space-y-8">
+            <LiveArticleRender initialHtml={article} />
+          </div>
         ) : hasSummary ? (
-          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-6">
-            <h2 className="text-xl font-semibold mb-2">{t('product.summaryHeading') || 'Summary'}</h2>
-            <p className="text-foreground/80">{summary}</p>
+          // Scenario 2: Article is DRAFT or missing
+          // Move summary to main content area with enhanced presentation
+          <div className="space-y-8">
+            <div className="rounded-3xl border border-border bg-card/60 backdrop-blur p-8 md:p-12 shadow-xl">
+              <div className="max-w-3xl mx-auto">
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+                  {t('product.aboutProduct') || 'About this product'}
+                </h2>
+                <div className="prose prose-lg dark:prose-invert max-w-none">
+                  <p className="text-foreground/90 leading-relaxed text-lg">
+                    {summary}
+                  </p>
+                </div>
+                
+                {/* Coming Soon Badge */}
+                <div className="mt-8 pt-8 border-t border-border/50">
+                  <div className="flex items-center gap-3 text-sm text-foreground/60">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      <span className="font-medium">
+                        {t('product.detailedReviewComingSoon') || 'Detailed review coming soon'}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-foreground/50 text-sm">
+                    {t('product.weAreWriting') || "We're currently writing a comprehensive analysis of this product. Check back soon for the full review with detailed insights, comparisons, and recommendations."}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-yellow-300/40 bg-yellow-50/80 dark:bg-yellow-900/40 p-4 text-sm">
-            <p className="text-yellow-800 dark:text-yellow-100">
-              {t('product.noArticleYet') || "This product doesn't have an article yet — we'll publish complete content soon."}
-            </p>
+          // Scenario 3: No content at all
+          <div className="rounded-3xl border border-amber-300/40 bg-amber-50/80 dark:bg-amber-900/20 p-8 text-center">
+            <div className="max-w-2xl mx-auto">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <span className="text-3xl">📝</span>
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                {t('product.contentInProgress') || 'Content in progress'}
+              </h3>
+              <p className="text-foreground/70">
+                {t('product.noContentYet') || "We're working on the content for this product. Please check back soon for detailed information and analysis."}
+              </p>
+            </div>
           </div>
         )}
 

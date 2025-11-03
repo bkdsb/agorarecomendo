@@ -60,7 +60,8 @@ export async function PATCH(
     }
 
   const body = await request.json();
-  const { title, summary, article, imageUrl, categoryId, tags, links, reviews, scrapedQnA, titlePtBr, summaryPtBr, articlePtBr } = body;
+  const { title, summary, article, imageUrl, categoryId, tags, links, reviews, scrapedQnA, titlePtBr, summaryPtBr, articlePtBr, articleStatus, articleStatusPtBr } = body;
+  
   const safeArticle = typeof article === 'string' ? cleanHtml(article) : undefined;
   const safeArticlePt = typeof articlePtBr === 'string' ? cleanHtml(articlePtBr) : undefined;
 
@@ -114,20 +115,21 @@ export async function PATCH(
       });
     }
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(summary !== undefined ? { summary } : {}),
-        ...(titlePtBr !== undefined ? { titlePtBr } : {}),
-        ...(summaryPtBr !== undefined ? { summaryPtBr } : {}),
-        ...(safeArticle !== undefined ? { article: safeArticle } : {}),
-        ...(safeArticlePt !== undefined ? { articlePtBr: safeArticlePt } : {}),
-        ...(imageUrl !== undefined ? { imageUrl } : {}),
-        ...(categoryId !== undefined ? { categoryId: categoryId || null } : {}),
-  ...(tags !== undefined ? { tags: tags || null } : {}),
-    ...(scrapedQnA !== undefined ? { scrapedQnA: typeof scrapedQnA === 'string' ? scrapedQnA : JSON.stringify(scrapedQnA) } : {}),
-        ...(slugUpdate ? { slug: slugUpdate } : {}),
+    // Build update data
+    const updateData: any = {
+      ...(title !== undefined ? { title } : {}),
+      ...(summary !== undefined ? { summary } : {}),
+      ...(titlePtBr !== undefined ? { titlePtBr } : {}),
+      ...(summaryPtBr !== undefined ? { summaryPtBr } : {}),
+      ...(safeArticle !== undefined ? { article: safeArticle } : {}),
+      ...(safeArticlePt !== undefined ? { articlePtBr: safeArticlePt } : {}),
+      ...(articleStatus !== undefined ? { articleStatus } : {}),
+      ...(articleStatusPtBr !== undefined ? { articleStatusPtBr } : {}),
+      ...(imageUrl !== undefined ? { imageUrl } : {}),
+      ...(categoryId !== undefined ? { categoryId: categoryId || null } : {}),
+      ...(tags !== undefined ? { tags: tags || null } : {}),
+      ...(scrapedQnA !== undefined ? { scrapedQnA: typeof scrapedQnA === 'string' ? scrapedQnA : JSON.stringify(scrapedQnA) } : {}),
+      ...(slugUpdate ? { slug: slugUpdate } : {}),
         ...(shouldReplaceLinks
           ? {
               links: {
@@ -160,7 +162,11 @@ export async function PATCH(
               },
             }
           : {}),
-      },
+    };
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: updateData,
       include: { category: true, links: true, reviews: true },
     });
 

@@ -474,31 +474,57 @@ function EditarProdutoPageClient({ id }: { id: string }) {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="space-y-6 lg:col-span-2">
-        {/* Title */}
-        <AppleCard variant="glass" className="p-6">
-          <label className="block text-sm font-medium mb-3 text-foreground">{t('editor.title') || 'Title'}</label>
-          <textarea
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-black/10 dark:border-white/20 text-foreground resize-y min-h-[60px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 backdrop-blur-xl"
-            placeholder={t('editor.titlePlaceholder') || 'Enter product title...'}
-            required
-          />
-        </AppleCard>
+        {/* Title - Blue accent glow */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="group relative overflow-hidden rounded-2xl backdrop-blur-xl bg-white/50 dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.06] shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,0.15)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_2px_rgba(255,255,255,0.03)] hover:shadow-[0_8px_24px_rgba(59,130,246,0.08),inset_0_1px_2px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_8px_24px_rgba(59,130,246,0.15),inset_0_1px_2px_rgba(255,255,255,0.06)] transition-all duration-500">
+            {/* Elegant blue glow on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.04] via-transparent to-cyan-500/[0.02] dark:from-blue-400/[0.03] dark:to-cyan-400/[0.015] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/10 dark:from-transparent dark:via-white/[0.01] dark:to-white/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <div className="relative p-6">
+              <label className="block text-[13px] font-semibold mb-3 text-foreground/80 tracking-tight">
+                {t('editor.title') || 'Title'}
+              </label>
+              <textarea
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full p-4 text-lg font-semibold rounded-xl bg-white/60 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.05] text-foreground resize-y min-h-[70px] focus:outline-none focus:bg-white/80 dark:focus:bg-black/40 focus:border-blue-500/30 focus:ring-2 focus:ring-blue-500/20 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.05)] backdrop-blur-sm transition-all duration-300 placeholder:text-foreground/30"
+                placeholder={t('editor.titlePlaceholder') || 'Enter product title...'}
+                required
+              />
+            </div>
+          </div>
+        </motion.div>
 
-        {/* Summary */}
-        <AppleCard variant="glass" className="p-6">
-          <label className="block text-sm font-medium mb-3 text-foreground">
-            {t('editor.cardSummary') || 'Card Summary'}
-          </label>
-          <textarea
-            value={formData.summary}
-            onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-            className="w-full p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-black/10 dark:border-white/20 text-foreground resize-y min-h-[80px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 backdrop-blur-xl"
-            placeholder={t('editor.summaryPlaceholder') || 'Brief description that will appear on the product card...'}
-            required
-          />
-        </AppleCard>
+        {/* Summary - Emerald accent glow */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="group relative overflow-hidden rounded-2xl backdrop-blur-xl bg-white/50 dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.06] shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,0.15)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_2px_rgba(255,255,255,0.03)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.08),inset_0_1px_2px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_8px_24px_rgba(16,185,129,0.15),inset_0_1px_2px_rgba(255,255,255,0.06)] transition-all duration-500">
+            {/* Elegant emerald glow on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.03] via-transparent to-teal-500/[0.02] dark:from-emerald-400/[0.025] dark:to-teal-400/[0.015] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/10 dark:from-transparent dark:via-white/[0.01] dark:to-white/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <div className="relative p-6">
+              <label className="block text-[13px] font-semibold mb-3 text-foreground/80 tracking-tight">
+                {t('editor.cardSummary') || 'Card Summary'}
+              </label>
+              <textarea
+                value={formData.summary}
+                onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                className="w-full p-4 text-sm leading-relaxed rounded-xl bg-white/60 dark:bg-black/30 border border-black/[0.05] dark:border-white/[0.05] text-foreground resize-y min-h-[90px] focus:outline-none focus:bg-white/80 dark:focus:bg-black/40 focus:border-emerald-500/30 focus:ring-2 focus:ring-emerald-500/20 focus:shadow-[0_0_0_4px_rgba(16,185,129,0.05)] backdrop-blur-sm transition-all duration-300 placeholder:text-foreground/30"
+                placeholder={t('editor.summaryPlaceholder') || 'Brief description that will appear on the product card...'}
+                required
+              />
+            </div>
+          </div>
+        </motion.div>
 
         {/* Product Article Editor (inline, premium) */}
         <div className="bg-card/50 backdrop-blur-xl border border-border/40 rounded-2xl overflow-hidden shadow-sm">
@@ -572,17 +598,18 @@ function EditarProdutoPageClient({ id }: { id: string }) {
         {/* Internal Tags (chips with Apple-like blue, comma/Enter to add, autosave) */}
         <AppleCard variant="glass" className="p-6">
           <label className="block text-sm font-medium mb-2 text-foreground">{t('editor.internalTags') || 'Internal Tags'}</label>
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-background p-2">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-black/[0.06] dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.06] backdrop-blur-xl p-2 shadow-[0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.1)]">
             {tagsList.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-2 rounded-full bg-blue-600 text-white text-xs font-medium px-3 py-1"
+                className="inline-flex items-center gap-2 rounded-full border border-black/[0.06] dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.06] backdrop-blur-sm text-foreground/80 text-xs font-medium px-3 py-1 shadow-sm hover:border-blue-500/30 hover:text-blue-700/80 dark:hover:text-blue-300/90 transition-colors"
               >
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500/80" />
                 {tag}
                 <button
                   type="button"
                   onClick={() => removeTag(tag)}
-                  className="ml-1 rounded-full hover:bg-white/20 w-4 h-4 leading-none flex items-center justify-center"
+                  className="ml-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10 w-4 h-4 leading-none flex items-center justify-center transition-colors"
                   aria-label={`${t('editor.removeTag') || 'Remove tag'} ${tag}`}
                 >
                   ×
@@ -605,19 +632,34 @@ function EditarProdutoPageClient({ id }: { id: string }) {
           <p className="mt-1 text-xs text-foreground/60">{t('editor.tagsNote') || 'Used only to relate similar products. Will not be displayed on the site.'}</p>
         </AppleCard>
 
-        {/* Reviews Display Configuration (Admin) */}
-        <AppleCard variant="premium" className="p-6">
-          <div className="text-center mb-6">
-            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide bg-gradient-to-b from-foreground/12 to-foreground/8 text-foreground/90 shadow-sm">
-              {t('editor.reviewsDisplay') || 'Reviews Display (Public)'}
-            </span>
-            <p className="mt-3 text-[13px] text-foreground/60 leading-relaxed">Configure how reviews will appear on the product page</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[12px] font-semibold text-foreground/80 mb-2">Layout Style</label>
+        {/* Reviews Display Configuration - Purple accent glow */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="group relative overflow-hidden rounded-2xl backdrop-blur-xl bg-white/50 dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.06] shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,0.15)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_2px_rgba(255,255,255,0.03)] hover:shadow-[0_8px_24px_rgba(147,51,234,0.08),inset_0_1px_2px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_8px_24px_rgba(147,51,234,0.15),inset_0_1px_2px_rgba(255,255,255,0.06)] transition-all duration-500">
+            {/* Elegant purple glow on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.04] via-transparent to-pink-500/[0.02] dark:from-purple-400/[0.03] dark:to-pink-400/[0.015] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/10 dark:from-transparent dark:via-white/[0.01] dark:to-white/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <div className="relative p-8">
+              <div className="text-center mb-8">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-semibold tracking-wide bg-purple-500/[0.08] dark:bg-purple-400/[0.12] text-purple-700/90 dark:text-purple-300/90 border border-purple-500/20 dark:border-purple-400/20 shadow-[0_2px_8px_rgba(147,51,234,0.12)] backdrop-blur-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400 animate-pulse" />
+                  {t('editor.reviewsDisplay') || 'Reviews Display (Public)'}
+                </span>
+              <p className="mt-4 text-[13px] text-foreground/60 leading-relaxed max-w-lg mx-auto">Configure how reviews will appear on the product page</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <label className="block text-[12px] font-semibold text-foreground/80 mb-2.5 tracking-wide">Layout Style</label>
               <select
-                className="w-full px-4 py-3 rounded-xl bg-background/80 backdrop-blur border border-border/60 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all shadow-sm"
+                className="w-full px-4 py-3.5 rounded-xl bg-gradient-to-b from-background/90 to-background/70 backdrop-blur-xl border border-border/60 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
                 value={reviewsDisplay.mode}
                 onChange={(e)=> setReviewsDisplay((s)=> ({ ...s, mode: e.target.value as any }))}
               >
@@ -629,45 +671,72 @@ function EditarProdutoPageClient({ id }: { id: string }) {
                 <option value="summary">Summary only (average & count)</option>
                 <option value="hidden">Hidden</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-foreground/80 mb-2">{t('editor.maxReviews') || 'Maximum reviews'}</label>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <label className="block text-[12px] font-semibold text-foreground/80 mb-2.5 tracking-wide">{t('editor.maxReviews') || 'Maximum reviews'}</label>
               <input type="number" min={1} max={12} value={reviewsDisplay.max}
                 onChange={(e)=> setReviewsDisplay((s)=> ({ ...s, max: Math.max(1, Math.min(12, Number(e.target.value)||0)) }))}
-                className="w-full px-4 py-3 rounded-xl bg-background/80 backdrop-blur border border-border/60 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all shadow-sm"
+                className="w-full px-4 py-3.5 rounded-xl bg-gradient-to-b from-background/90 to-background/70 backdrop-blur-xl border border-border/60 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
               />
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-foreground/80 mb-2">{t('editor.order') || 'Order'}</label>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <label className="block text-[12px] font-semibold text-foreground/80 mb-2.5 tracking-wide">{t('editor.order') || 'Order'}</label>
               <select
-                className="w-full px-4 py-3 rounded-xl bg-background/80 backdrop-blur border border-border/60 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all shadow-sm"
+                className="w-full px-4 py-3.5 rounded-xl bg-gradient-to-b from-background/90 to-background/70 backdrop-blur-xl border border-border/60 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
                 value={reviewsDisplay.order}
                 onChange={(e)=> setReviewsDisplay((s)=> ({ ...s, order: e.target.value as any }))}
               >
                 <option value="recent">{t('editor.mostRecent') || 'Most recent'}</option>
                 <option value="rating">{t('editor.highestRating') || 'Highest rating'}</option>
               </select>
-            </div>
-            <div className="flex items-center gap-3 pt-7">
+            </motion.div>
+            <motion.div 
+              className="flex items-center gap-3 pt-7"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+            >
               <input 
                 id="cfg-stars" 
                 type="checkbox" 
                 checked={reviewsDisplay.showStars} 
                 onChange={(e)=> setReviewsDisplay((s)=> ({ ...s, showStars: e.target.checked }))} 
-                className="w-5 h-5 rounded-md border-2 border-border/60 bg-background/80 checked:bg-blue-500 checked:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                className="w-5 h-5 rounded-lg border-2 border-border/60 bg-gradient-to-b from-background/90 to-background/70 checked:bg-gradient-to-br checked:from-purple-500 checked:to-blue-500 checked:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all cursor-pointer shadow-sm"
               />
               <label htmlFor="cfg-stars" className="text-[13px] font-medium text-foreground/90 cursor-pointer">{t('editor.showStarsPublic') || 'Show stars in public'}</label>
-            </div>
+            </motion.div>
           </div>
 
           {/* Sample (public preview) */}
-          <div className="mt-6 pt-6 border-t border-border/30">
-            <div className="text-center mb-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
+          <motion.div 
+            className="mt-8 pt-8 border-t border-border/20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="text-center mb-6">
+              <motion.span 
+                className="inline-flex items-center px-4 py-2 rounded-full text-[11px] font-medium bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shadow-sm"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 {t('editor.samplePreview') || 'Live Preview'}
-              </span>
+              </motion.span>
             </div>
-            <div className="mx-auto max-w-2xl">
+            <motion.div 
+              className="mx-auto max-w-2xl"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
               {(function(){
                 const list = [...reviews];
                 if (reviewsDisplay.order === 'rating') list.sort((a:any,b:any)=> (b.rating||0)-(a.rating||0));
@@ -711,9 +780,11 @@ function EditarProdutoPageClient({ id }: { id: string }) {
                   </div>
                 );
               })()}
+            </motion.div>
+          </motion.div>
             </div>
           </div>
-        </AppleCard>
+        </motion.div>
 
         {/* Links (Minimalist accordion, autosave and store badge) */}
         <AppleCard variant="glass" className="p-6">
@@ -940,29 +1011,54 @@ function EditarProdutoPageClient({ id }: { id: string }) {
               </AppleCard>
             </div>
           )}
-          {/* Reviews Manager below Preview (Apple-like header) */}
-          <AppleCard variant="premium" className="mt-10 p-6">
-            <div className="text-center mb-5">
-              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide bg-gradient-to-b from-foreground/12 to-foreground/8 text-foreground/90 shadow-sm">{t('chip.reviewsEditor') || 'Reviews Editor'}</span>
-              <div className="mt-3 text-[13px] leading-relaxed text-foreground/60">{t('reviews.subtitle') || 'Manage product reviews'}</div>
-              <div className="mt-4 flex items-center justify-center">
-                <AppleButton
-                  type="button"
-                  variant="primary"
-                  onClick={() => setIsImportOpen(true)}
-                >
-                  {t('btn.importFromPrimary') || 'Import Reviews'}
-                </AppleButton>
+          {/* Reviews Manager - Amber warm glow */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="group relative overflow-hidden rounded-2xl backdrop-blur-xl bg-white/50 dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.06] shadow-[0_2px_8px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,0.15)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_2px_rgba(255,255,255,0.03)] hover:shadow-[0_8px_24px_rgba(245,158,11,0.08),inset_0_1px_2px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_8px_24px_rgba(245,158,11,0.15),inset_0_1px_2px_rgba(255,255,255,0.06)] transition-all duration-500 mt-10">
+              {/* Warm amber glow on hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.03] via-transparent to-orange-500/[0.02] dark:from-amber-400/[0.025] dark:to-orange-400/[0.015] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/10 dark:from-transparent dark:via-white/[0.01] dark:to-white/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="relative p-8">
+                <div className="text-center mb-7">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-semibold tracking-wide bg-amber-500/[0.08] dark:bg-amber-400/[0.12] text-amber-700/90 dark:text-amber-300/90 border border-amber-500/20 dark:border-amber-400/20 shadow-[0_2px_8px_rgba(245,158,11,0.12)] backdrop-blur-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+                    {t('chip.reviewsEditor') || 'Reviews Editor'}
+                  </span>
+                <p className="mt-4 text-[13px] leading-relaxed text-foreground/60 max-w-xs mx-auto">{t('reviews.subtitle') || 'Curate and manage customer reviews for this product'}</p>
+                <div className="mt-6 flex items-center justify-center">
+                  <AppleButton
+                    type="button"
+                    variant="primary"
+                    onClick={() => setIsImportOpen(true)}
+                  >
+                    {t('btn.importFromPrimary') || 'Import Reviews'}
+                  </AppleButton>
+                </div>
               </div>
+              {/* Fecha div text-center */}
               {/* Modal de importação */}
               {isImportOpen && (
-                <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/50">
-                  <AppleCard variant="glass" className="w-full max-w-md overflow-hidden">
-                    <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
-                      <h5 className="text-sm font-semibold text-foreground">{t('chip.reviewsEditor') || 'Reviews Editor'}</h5>
-                      <AppleButton variant="ghost" size="sm" onClick={()=> setIsImportOpen(false)}>{t('common.close') || 'Close'}</AppleButton>
-                    </div>
-                    <div className="p-5 space-y-3">
+                <motion.div 
+                  className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  >
+                    <AppleCard variant="glass" className="w-full max-w-md overflow-hidden">
+                      <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
+                        <h5 className="text-sm font-semibold text-foreground">{t('chip.reviewsEditor') || 'Reviews Editor'}</h5>
+                        <AppleButton variant="ghost" size="sm" onClick={()=> setIsImportOpen(false)}>{t('common.close') || 'Close'}</AppleButton>
+                      </div>
+                      <div className="p-5 space-y-3">
                       <button
                         type="button"
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border/60 bg-background/80 hover:bg-background transition-all text-left"
@@ -1053,17 +1149,18 @@ function EditarProdutoPageClient({ id }: { id: string }) {
                           <div className="text-[12px] text-foreground/60">{(t as any)?.locale === 'pt-BR' ? 'Mais estável, apenas amazon.* (Rainforest API).' : 'More stable, amazon.* only (Rainforest API).'}</div>
                         </div>
                       </button>
-                    </div>
-                  </AppleCard>
-                </div>
+                      </div>
+                    </AppleCard>
+                  </motion.div>
+                </motion.div>
               )}
-
+              <ReviewsManager
+                initialReviews={reviews}
+                onReviewsChange={(r)=> setReviews(r)}
+              />
+              </div>
             </div>
-            <ReviewsManager
-              initialReviews={reviews}
-              onReviewsChange={(r)=> setReviews(r)}
-            />
-          </AppleCard>
+          </motion.div>
         </div>
       </form>
     </div>

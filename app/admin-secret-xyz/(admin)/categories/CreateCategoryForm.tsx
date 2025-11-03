@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 import { useLanguage } from '@/components/LanguageProvider';
 
-export default function CreateCategoryForm() {
+export default function CreateCategoryForm({ onCreated }: { onCreated?: (cat: any) => void }) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -28,7 +28,11 @@ export default function CreateCategoryForm() {
         body: JSON.stringify({ name: name.trim() }),
       });
       if (!res.ok) throw new Error('Failed to create');
+      const created = await res.json().catch(() => undefined);
       setName('');
+      // Optimistic local update (if parent provided a callback)
+      if (created) onCreated?.(created);
+      // Fallback refresh to sync any server-driven data
       router.refresh();
       toast.success(t('categories.created') || 'Category created', undefined, { anchor });
     } catch (err) {

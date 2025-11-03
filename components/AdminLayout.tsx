@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { Menu, Package, LineChart, Settings, Home, LogOut, Megaphone, Tags, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Menu, Package, LineChart, Settings, Home, Megaphone, Tags } from "lucide-react";
 import ThemeToggleButton from "./ThemeToggleButton";
 import SoftBubbles from "./SoftBubbles";
 import LanguageToggle from "./LanguageToggle";
@@ -22,8 +22,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const { t } = useLanguage();
-
-  const handleLogout = () => signOut({ callbackUrl: "/" });
 
   // Auto-expand on hover in edit pages; keep open by default on dashboard
   const isEditPage = pathname?.includes('/products/') && pathname?.includes('/edit');
@@ -117,7 +115,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <NavItem href="/admin-secret-xyz/settings" icon={Settings} label={t("admin.settings") as any} />
           </nav>
 
-          <div className={`mt-auto pt-5 border-t border-border/40 transition-all duration-300 ${isCollapsed ? "flex justify-center" : "space-y-3"}`}>
+          <div className={`mt-auto pt-5 border-t border-border/40 transition-all duration-300 ${isCollapsed ? "flex justify-center" : ""}`}>
             <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3 px-2"}`}>
               <Image src={session?.user?.image || "/globe.svg"} alt={session?.user?.name || "Admin"} width={36} height={36} className="rounded-full ring-2 ring-border/30" unoptimized />
               <motion.span
@@ -129,19 +127,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 {!isCollapsed && session?.user?.name}
               </motion.span>
             </div>
-            <motion.div
-              initial={false}
-              animate={{ opacity: isCollapsed ? 0 : 1, height: isCollapsed ? 0 : "auto" }}
-              transition={{ duration: 0.2 }}
-              style={{ overflow: "hidden" }}
-            >
-              {!isCollapsed && (
-                <button onClick={handleLogout} className="flex items-center gap-2 px-2 py-1.5 text-[13px] font-medium text-red-500/90 hover:text-red-600 hover:bg-red-500/5 rounded-lg transition-all">
-                  <LogOut className="w-4 h-4" />
-                  {t("header.logout")}
-                </button>
-              )}
-            </motion.div>
           </div>
         </div>
       </motion.aside>
@@ -158,6 +143,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <span className="text-sm font-medium text-foreground/80 truncate max-w-[220px]">{session?.user?.name}</span>
             <LanguageToggle />
             <ThemeToggleButton />
+            <Link href="/admin-secret-xyz/settings" className="p-2 hover:bg-accent rounded-lg transition-colors" aria-label="Settings">
+              <Settings className="w-5 h-5" />
+            </Link>
           </div>
         </header>
 

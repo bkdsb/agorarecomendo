@@ -22,9 +22,8 @@ export function CategoryChipsInput({
   className?: string;
 }) {
   const [query, setQuery] = React.useState("");
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [highlight, setHighlight] = React.useState(0);
   const [localCategories, setLocalCategories] = React.useState<Category[]>(categories);
+  const [inlineCompletion, setInlineCompletion] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Sync with parent categories
@@ -37,30 +36,88 @@ export function CategoryChipsInput({
 
   const filtered = React.useMemo(() => {
     const q = normalize(query);
-    return localCategories
-      .filter((c) => normalize((locale === "pt-BR" && c.namePtBr) ? c.namePtBr! : c.name).includes(q))
+    // Combine existing categories with title suggestions
+    const allOptions = [
+      ...localCategories.map(c => ({ type: 'category' as const, data: c })),
+      ...titleSuggestions.map(s => ({ type: 'suggestion' as const, name: s }))
+    ];
+    
+    return allOptions
+      .filter((item) => {
+        if (item.type === 'category') {
+          return normalize((locale === "pt-BR" && item.data.namePtBr) ? item.data.namePtBr! : item.data.name).includes(q);
+        } else {
+          return normalize(item.name).includes(q);
+        }
+      })
       .slice(0, 7);
-  }, [localCategories, query, locale]);
+  }, [localCategories, titleSuggestions, query, locale]);
+
+  // Update inline completion based on query
+  React.useEffect(() => {
+    if (!query.trim() || selected) {
+      setInlineCompletion("");
+      return;
+    }
+
+    const q = normalize(query);
+    // Find first match from categories or suggestions
+    const match = filtered[0];
+    
+    if (match) {
+      let matchText = "";
+      if (match.type === 'category') {
+        matchText = (locale === "pt-BR" && match.data.namePtBr) ? match.data.namePtBr! : match.data.name;
+      } else {
+        matchText = match.name;
+      }
+      
+      const normalizedMatch = normalize(matchText);
+      if (normalizedMatch.startsWith(q)) {
+        // Show the remaining part as inline completion
+        const remaining = matchText.slice(query.length);
+        setInlineCompletion(remaining);
+      } else {
+        setInlineCompletion("");
+      }
+    } else {
+      setInlineCompletion("");
+    }
+  }, [query, filtered, selected, locale]);
 
   const labelOf = (c: Category) => (locale === "pt-BR" && c.namePtBr) ? c.namePtBr! : c.name;
 
-  const commitSelect = async (text?: string) => {
-    if (filtered.length > 0 && !text) {
-      onChange(filtered[highlight]?.id || filtered[0]?.id || "");
-      setIsOpen(false); setQuery("");
-      return;
+  const acceptCompletion = async () => {
+    if (inlineCompletion && query) {
+      const fullText = query + inlineCompletion;
+      // Check if it's an existing category
+      const exists = localCategories.find((c) => labelOf(c).toLowerCase() === fullText.toLowerCase());
+      if (exists) {
+        onChange(exists.id); 
+        setQuery(""); 
+        setInlineCompletion("");
+        return;
+      }
+      // Create new category
+      const created = await onCreate(fullText);
+      setLocalCategories(prev => [...prev, created]);
+      onChange(created.id);
+      setQuery(""); 
+      setInlineCompletion("");
     }
+  };
+
+  const commitSelect = async (text?: string) => {
     const name = (text ?? query).trim();
     if (!name) return;
     const exists = localCategories.find((c) => labelOf(c).toLowerCase() === name.toLowerCase());
     if (exists) {
-      onChange(exists.id); setQuery(""); setIsOpen(false); return;
+      onChange(exists.id); setQuery(""); setInlineCompletion(""); return;
     }
     const created = await onCreate(name);
-    // Update local state immediately
     setLocalCategories(prev => [...prev, created]);
     onChange(created.id);
-    setQuery(""); setIsOpen(false);
+    setQuery(""); setInlineCompletion("");
   };
 
   const clearSelection = () => { 
@@ -69,83 +126,89 @@ export function CategoryChipsInput({
   };
 
   return (
-    <div className={"relative rounded-xl border border-black/10 dark:border-white/20 bg-white/60 dark:bg-white/10 backdrop-blur-xl p-3 shadow-sm " + (className ?? "")}
+    <div className={"relative rounded-xl border border-black/[0.06] dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.06] backdrop-blur-xl p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.1)] " + (className ?? "")}
       onClick={() => inputRef.current?.focus()}
     >
       <div className="flex flex-wrap items-center gap-2">
         {selected && (
-          <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#007AFF] to-[#0051D5] text-white text-xs font-medium px-3 py-1.5 shadow-sm">
+          <span className="inline-flex items-center gap-2 rounded-full border border-black/[0.06] dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.06] backdrop-blur-sm text-foreground/80 text-xs font-medium px-3 py-1.5 shadow-sm hover:border-blue-500/30 hover:text-blue-700/80 dark:hover:text-blue-300/90 transition-colors">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500/80" />
             {labelOf(selected)}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); clearSelection(); }}
-              className="ml-1 rounded-full hover:bg-white/20 w-4 h-4 leading-none flex items-center justify-center transition-colors"
+              className="ml-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10 w-4 h-4 leading-none flex items-center justify-center transition-colors"
               aria-label="Remove category"
             >
               ×
             </button>
           </span>
         )}
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); setIsOpen(true); setHighlight(0); }}
-          onFocus={() => setIsOpen(true)}
-          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
-          onKeyDown={async (e) => {
-            if (e.key === "Enter") { e.preventDefault(); await commitSelect(); }
-            else if (e.key === "ArrowDown") { e.preventDefault(); setHighlight((h) => Math.min(filtered.length - 1, h + 1)); }
-            else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(0, h - 1)); }
-            else if (e.key === "Backspace" && query.length === 0 && selected) { e.preventDefault(); clearSelection(); }
-            else if (e.key === "Delete" && query.length === 0 && selected) { e.preventDefault(); clearSelection(); }
-          }}
-          placeholder={selected ? "" : "Type to search or create"}
-          className="flex-1 min-w-[160px] p-1.5 bg-transparent focus:outline-none text-sm text-foreground placeholder:text-foreground/50"
-        />
+        <div className="relative flex-1 min-w-[160px]">
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); }}
+            onFocus={() => {}}
+            onBlur={() => {}}
+            onKeyDown={async (e) => {
+              if (e.key === "Tab" || e.key === "ArrowRight") {
+                if (inlineCompletion && query) {
+                  e.preventDefault();
+                  await acceptCompletion();
+                }
+              }
+              else if (e.key === "Enter") { 
+                e.preventDefault();
+                if (inlineCompletion && query) {
+                  await acceptCompletion();
+                } else {
+                  await commitSelect(); 
+                }
+              }
+              else if (e.key === " " && inlineCompletion && query.length > 0) {
+                e.preventDefault();
+                await acceptCompletion();
+              }
+              else if (e.key === "Backspace" && query.length === 0 && selected) { 
+                e.preventDefault(); 
+                clearSelection(); 
+              }
+              else if (e.key === "Escape") { 
+                setInlineCompletion(""); 
+              }
+            }}
+            placeholder={selected ? "" : "Type to search or create"}
+            className="w-full p-1.5 bg-transparent focus:outline-none text-sm text-foreground placeholder:text-foreground/50 relative z-10"
+            style={{ caretColor: 'auto' }}
+          />
+          {/* Inline completion ghost text */}
+          {inlineCompletion && query && (
+            <div className="absolute left-0 top-0 p-1.5 text-sm text-foreground/30 pointer-events-none z-0 whitespace-nowrap">
+              <span className="invisible">{query}</span>{inlineCompletion}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Inline suggestions from title and existing categories */}
-      {!selected && (titleSuggestions.length > 0 || localCategories.length > 0) && (
-        <div className="mt-2 flex flex-wrap gap-2">
+      {/* Title-based suggestions (subtle, minimal) */}
+      {!selected && !query && titleSuggestions.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
           {titleSuggestions.slice(0, 3).map((s) => (
             <button
               key={s}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { setQuery(s); setIsOpen(true); setHighlight(0); }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 transition-colors"
+              onClick={async () => { 
+                setQuery(s);
+                await commitSelect(s);
+              }}
+              className="group inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-full border border-black/[0.06] dark:border-white/[0.06] bg-white/50 dark:bg-white/[0.06] backdrop-blur-sm text-foreground/60 hover:text-blue-700/80 dark:hover:text-blue-300/90 hover:border-blue-500/30 shadow-sm transition-all duration-200"
             >
-              <span className="opacity-60">Suggest:</span> {s}
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500/70 group-hover:bg-blue-500 transition-colors" />
+              <span>{s}</span>
             </button>
           ))}
-        </div>
-      )}
-
-      {/* Dropdown */}
-      {isOpen && (filtered.length > 0 || query.trim()) && (
-        <div className="absolute z-10 mt-2 w-full rounded-xl border border-black/10 dark:border-white/20 bg-white/95 dark:bg-black/95 backdrop-blur-xl shadow-lg overflow-hidden">
-          {filtered.map((c, idx) => (
-            <button
-              key={c.id}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { onChange(c.id); setIsOpen(false); setQuery(""); }}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors ${idx === highlight ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300' : 'text-foreground/90 hover:bg-foreground/5'}`}
-            >
-              {labelOf(c)}
-            </button>
-          ))}
-          {/* Create */}
-          {query.trim() && (
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={async () => { await commitSelect(query.trim()); }}
-              className="w-full text-left px-3 py-2 text-sm border-t border-border/60 text-blue-600 dark:text-blue-400 hover:bg-foreground/5 font-medium transition-colors"
-            >
-              + Create "{query.trim()}"
-            </button>
-          )}
         </div>
       )}
     </div>

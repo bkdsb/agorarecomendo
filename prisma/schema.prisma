@@ -30,6 +30,8 @@ model Product {
   summaryPtBr        String?
   article            String?
   articlePtBr        String?
+  articleStatus      String?         @default("draft") // "draft" or "published"
+  articleStatusPtBr  String?         @default("draft") // "draft" or "published"
   scrapedDescription String?
   scrapedQnA         String?
   categoryId         String?

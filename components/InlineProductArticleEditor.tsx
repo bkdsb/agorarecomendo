@@ -52,6 +52,7 @@ export default function InlineProductArticleEditor({
   );
   const [saveStatus, setSaveStatus] = React.useState<SaveStatus>("Saved");
   const [publishStatus, setPublishStatus] = React.useState<PublishStatus>("draft");
+  const publishStatusRef = React.useRef<PublishStatus>("draft"); // Keep ref in sync for autosave
   const [dirty, setDirty] = React.useState(false);
   const autosaveRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
@@ -61,25 +62,64 @@ export default function InlineProductArticleEditor({
   const userHidRef = React.useRef<boolean>(false); // Track if user intentionally hid editor
   const editorRef = React.useRef<EditorInstance | null>(null);
 
-  // Load initial publish status
+  // Load initial publish status and article content from database
   React.useEffect(() => {
-    const loadPublishStatus = async () => {
+    const loadProductData = async () => {
       try {
-        const resGet = await fetch(`/api/products/${productId}`);
+        const resGet = await fetch(`/api/products/${productId}`, { 
+          cache: 'no-store' // Force fresh data
+        });
         if (resGet.ok) {
           const prod = await resGet.json();
-          let scraped: any = {};
-          try {
-            scraped = prod?.scrapedQnA ? JSON.parse(prod.scrapedQnA) : {};
-          } catch {}
-          const status = scraped.articleStatus?.[locale] || "draft";
+          
+          // Load publish status
+          const status = locale === "pt-BR" 
+            ? (prod.articleStatusPtBr || "draft")
+            : (prod.articleStatus || "draft");
+          
           setPublishStatus(status);
+          publishStatusRef.current = status;
+          
+          // Load article content
+          const articleHtml = locale === "pt-BR" 
+            ? (prod.articlePtBr || "")
+            : (prod.article || "");
+          
+          // Update states
+          setCurrentHtml(articleHtml);
+          if (locale === "pt-BR") {
+            setHtmlPt(articleHtml);
+          } else {
+            setHtmlEn(articleHtml);
+          }
+          
+          // Force editor to update content when editor is ready
+          if (editorRef.current && articleHtml) {
+            try {
+              // Set the HTML content directly in the editor
+              editorRef.current.commands.setContent(articleHtml);
+            } catch (e) {
+              console.error("Failed to update editor content", e);
+            }
+          }
         }
       } catch (e) {
-        console.error("Failed to load publish status", e);
+        console.error("Failed to load product data", e);
       }
     };
-    loadPublishStatus();
+    
+    // Load immediately
+    loadProductData();
+    
+    // Also reload when editor becomes visible (user returns to page)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadProductData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [productId, locale]);
 
   // Sync with external hidden state
@@ -155,23 +195,45 @@ export default function InlineProductArticleEditor({
     async (forcedHtml?: string, opts?: { publish?: boolean; silent?: boolean }) => {
       try {
         setSaveStatus("Saving");
-        const html = forcedHtml ?? currentHtml;
-        const payload: any = { scrapedQnA: undefined as any };
+        
+        // Cancel any pending autosave to avoid conflicts
+        if (autosaveRef.current) {
+          clearTimeout(autosaveRef.current);
+          autosaveRef.current = null;
+        }
+        
+        // Get HTML from editor or fallback to current state
+        let html = forcedHtml ?? currentHtml;
+        
+        // If no HTML and editor exists, try to get it from the editor
+        if (!html && editorRef.current) {
+          try {
+            html = editorRef.current.getHTML?.() || '';
+          } catch (e) {
+            console.error('Failed to get HTML from editor', e);
+          }
+        }
+        
+        // Fallback to stored HTML for the locale
+        if (!html) {
+          html = locale === "pt-BR" ? htmlPt : htmlEn;
+        }
+        
+        // Determine the new status
+        const newStatus: PublishStatus = opts?.publish !== undefined 
+          ? (opts.publish ? "published" : "draft")
+          : publishStatusRef.current; // If not specified, preserve current
+        
+        const payload: any = {};
+        
+        // Save article content and status
         if (locale === "en-US") {
           payload.article = html;
+          payload.articleStatus = newStatus;
         } else {
           payload.articlePtBr = html;
+          payload.articleStatusPtBr = newStatus;
         }
-        // Keep localized status inside scrapedQnA (slug is managed elsewhere now)
-        const resGet = await fetch(`/api/products/${productId}`);
-        const prod = resGet.ok ? await resGet.json() : null;
-        let scraped: any = {};
-        try {
-          scraped = prod?.scrapedQnA ? JSON.parse(prod.scrapedQnA) : {};
-        } catch {}
-        scraped.articleStatus = scraped.articleStatus || { "en-US": "draft", "pt-BR": "draft" };
-        scraped.articleStatus[locale] = opts?.publish ? "published" : "draft";
-        payload.scrapedQnA = scraped;
 
         const res = await fetch(`/api/products/${productId}`, {
           method: "PATCH",
@@ -180,21 +242,24 @@ export default function InlineProductArticleEditor({
           cache: "no-store",
           body: JSON.stringify(payload),
         });
+        
         if (!res.ok) {
           const txt = await res.text().catch(() => "");
           console.error("Save failed", res.status, txt);
           throw new Error("Failed to save");
         }
+        
         setDirty(false);
         setSaveStatus("Saved");
-        setPublishStatus(opts?.publish ? "published" : "draft");
+        setPublishStatus(newStatus);
+        publishStatusRef.current = newStatus;
         onSaved?.();
       } catch (e) {
         console.error(e);
         setSaveStatus("Error");
       }
     },
-    [productId, currentHtml, title, slug, locale]
+    [productId, currentHtml, locale, htmlPt, htmlEn]
   );
 
   const onChange = (html: string) => {
@@ -209,7 +274,8 @@ export default function InlineProductArticleEditor({
     } catch {}
     if (autosaveRef.current) clearTimeout(autosaveRef.current);
     autosaveRef.current = setTimeout(() => {
-      handleSave(html, { silent: true });
+      // Autosave preserves current publish status using ref (always up-to-date)
+      handleSave(html, { silent: true, publish: publishStatusRef.current === "published" });
     }, 5000);
   };
 
@@ -236,6 +302,7 @@ export default function InlineProductArticleEditor({
 
       if (isSave) {
         e.preventDefault();
+        // Cmd+S preserves current publish status (no opts = preserve)
         handleSave();
         return;
       }
@@ -318,7 +385,7 @@ export default function InlineProductArticleEditor({
           onClick={() => handleSave(undefined, { publish: false })}
           disabled={saveStatus === "Saving"}
         >
-          {tr("article.unpublish", "Unpublish")}
+          {tr("article.saveDraft", "Save as Draft")}
         </AppleButton>
       ) : (
         <AppleButton
@@ -334,7 +401,7 @@ export default function InlineProductArticleEditor({
       <AppleButton
         size="sm"
         variant="secondary"
-        onClick={() => handleSave(undefined, { publish: publishStatus === "published" })}
+        onClick={() => handleSave()} // No opts = preserve current status
         disabled={saveStatus === "Saving"}
       >
         {saveStatus === "Saving" ? tr("common.saving", "Saving...") : tr("common.save", "Save")}

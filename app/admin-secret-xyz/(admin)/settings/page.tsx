@@ -1,11 +1,14 @@
 "use client";
 
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useLanguage } from '@/components/LanguageProvider';
+import { LogOut } from 'lucide-react';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { t } = useLanguage();
+  
+  const handleLogout = () => signOut({ callbackUrl: "/" });
 
   return (
     <div className="p-8">
@@ -46,6 +49,19 @@ export default function SettingsPage() {
               </a>
             </li>
           </ul>
+        </section>
+
+        {/* Logout section */}
+        <section className="bg-card border border-border rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 text-red-600 dark:text-red-400">{t('settings.dangerZone') || 'Danger Zone'}</h2>
+          <p className="text-sm text-muted-foreground mb-4">{t('settings.logoutDescription') || 'Sign out from your account and return to the home page.'}</p>
+          <button 
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-medium transition-all border border-red-500/20 hover:border-red-500/30"
+          >
+            <LogOut className="w-4 h-4" />
+            {t('header.logout') || 'Logout'}
+          </button>
         </section>
       </div>
     </div>
