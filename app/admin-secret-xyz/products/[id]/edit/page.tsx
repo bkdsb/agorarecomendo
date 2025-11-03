@@ -20,7 +20,14 @@ import { AppleCard } from '@/components/ui/apple-card';
 
 const InlineProductArticleEditor = dynamic(() => import('@/components/InlineProductArticleEditor'), { ssr: false });
 
-export default function EditarProdutoPage({ params }: { params: { id: string } }) {
+// Server Component wrapper to handle async params
+export default async function EditarProdutoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <EditarProdutoPageClient id={id} />;
+}
+
+// Client Component with hooks
+function EditarProdutoPageClient({ id }: { id: string }) {
   const router = useRouter();
   const toast = useToast();
   const { t, locale } = useLanguage() as { t: (k: string)=> string; locale: 'en-US' | 'pt-BR' };
@@ -183,8 +190,8 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
 
   // Carregar dados do produto
   useEffect(() => {
-    if (params.id !== 'novo') {
-      fetch(`/api/products/${params.id}`)
+    if (id !== 'novo') {
+      fetch(`/api/products/${id}`)
         .then((res) => res.json())
         .then((data) => {
           setFormData({
@@ -237,7 +244,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
     } else {
       setIsLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
   // Keyboard shortcuts: Cmd+Shift+E for fullscreen toggle
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -288,11 +295,11 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
     setIsLoading(true);
 
     try {
-      const url = params.id === 'novo' 
+      const url = id === 'novo' 
         ? '/api/products'
-        : `/api/products/${params.id}`;
+        : `/api/products/${id}`;
       
-      const method = params.id === 'novo' ? 'POST' : 'PATCH';
+      const method = id === 'novo' ? 'POST' : 'PATCH';
 
       const res = await fetch(url, {
         method,
@@ -339,7 +346,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
     });
     if (!ok) return;
     try {
-      const res = await fetch(`/api/products/${params.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
       toast.next({ type: 'success', title: t('editor.productDeleted') || 'Product deleted', placement: 'bottom-center' });
       router.refresh();
@@ -357,7 +364,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
     const timer = setTimeout(async () => {
       try {
         setLinksSaveStatus('saving');
-        const url = `/api/products/${params.id}`;
+        const url = `/api/products/${id}`;
         await fetch(url, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -376,10 +383,10 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
   // Autosave de reviews (debounced) — substitui completamente as reviews
   useEffect(() => {
     if (isLoading) return;
-    if (params.id === 'novo') return;
+    if (id === 'novo') return;
     const timer = setTimeout(async () => {
       try {
-        await fetch(`/api/products/${params.id}`, {
+        await fetch(`/api/products/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reviews }),
@@ -394,7 +401,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
   // Autosave da configuração de exibição de reviews (debounced)
   useEffect(() => {
     if (isLoading) return;
-    if (params.id === 'novo') return;
+    if (id === 'novo') return;
     if (reviewsCfgTimer.current) clearTimeout(reviewsCfgTimer.current);
     reviewsCfgTimer.current = setTimeout(async () => {
       try {
@@ -404,7 +411,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
         const merged = { ...current, reviewsDisplay };
         const payload = JSON.stringify(merged);
         setFormData((fd) => ({ ...fd, scrapedQnA: payload } as any));
-        await fetch(`/api/products/${params.id}`, {
+        await fetch(`/api/products/${id}`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scrapedQnA: payload }),
         });
       } catch (e) {
@@ -430,12 +437,12 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
   // Autosave de tags (somente para itens existentes)
   useEffect(() => {
     if (isLoading) return;
-    if (params.id === 'novo') return;
+    if (id === 'novo') return;
     // Mantém string de tags em sincronia
     setFormData((fd) => ({ ...fd, tags: tagsList.join(', ') }));
     const timer = setTimeout(async () => {
       try {
-        await fetch(`/api/products/${params.id}`, {
+        await fetch(`/api/products/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tags: tagsList.join(', ') }),
@@ -462,7 +469,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
   return (
     <div className="px-6 py-8 max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold mb-8 text-foreground">
-        {params.id === 'novo' ? (t('editor.newProduct') || 'New Product') : (t('editor.editProduct') || 'Edit Product')}
+        {id === 'novo' ? (t('editor.newProduct') || 'New Product') : (t('editor.editProduct') || 'Edit Product')}
       </h1>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -529,7 +536,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
           {/* Editor inline sempre aberto */}
           <div className="p-5">
             <InlineProductArticleEditor
-              productId={params.id}
+              productId={id}
               initialTitle={formData.title}
               initialSlug={formData.slug}
               initialArticleEn={(formData as any).article}
@@ -822,7 +829,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
             >
               {t('common.cancel') || 'Cancel'}
             </AppleButton>
-            {params.id !== 'novo' && (
+            {id !== 'novo' && (
               <AppleButton
                 type="button"
                 variant="danger"
