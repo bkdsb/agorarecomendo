@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import DeleteCategoryButton from '@/app/admin-secret-xyz/categories/DeleteCategoryButton';
-import CreateCategoryForm from '@/app/admin-secret-xyz/categories/CreateCategoryForm';
+import DeleteCategoryButton from '@/app/admin-secret-xyz/(admin)/categories/DeleteCategoryButton';
+import CreateCategoryForm from '@/app/admin-secret-xyz/(admin)/categories/CreateCategoryForm';
 import { useLanguage } from '@/components/LanguageProvider';
 
 export default function CategoriesPage() {
