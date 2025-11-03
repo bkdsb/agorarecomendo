@@ -27,7 +27,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   // Auto-expand on hover in edit pages; keep open by default on dashboard
   const isEditPage = pathname?.includes('/products/') && pathname?.includes('/edit');
-  const isDashboard = pathname === '/admin-secret-xyz';
+  const isDashboard = pathname === '/admin-secret-xyz/dashboard';
 
   const NavItem = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => {
     const isActive = pathname === href || (pathname?.startsWith(`${href}/`) && href !== '/admin-secret-xyz');
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </Link>
 
           <nav className={`flex-1 space-y-1.5 ${isCollapsed ? "flex flex-col items-center" : ""}`}>
-            <NavItem href="/admin-secret-xyz" icon={LineChart} label={t("header.dashboard") as any} />
+            <NavItem href="/admin-secret-xyz/dashboard" icon={LineChart} label={t("header.dashboard") as any} />
             <NavItem href="/admin-secret-xyz/products" icon={Package} label={t("admin.products") as any} />
             <NavItem href="/admin-secret-xyz/categories" icon={Tags} label={t("admin.categories") as any} />
             <NavItem href="/admin-secret-xyz/banners" icon={Megaphone} label={t("admin.banners") as any} />
