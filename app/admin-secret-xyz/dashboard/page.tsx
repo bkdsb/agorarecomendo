@@ -2,12 +2,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Package, MousePointerClick, Image as ImageIcon, Plus, MoreVertical, ExternalLink, Home, Settings as SettingsIcon, Globe } from 'lucide-react';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../lib/auth';
+import { authOptions } from '../../../lib/auth';
 export const revalidate = 0;
-import prisma from '../../lib/prisma';
+import prisma from '../../../lib/prisma';
 import { cookies, headers } from 'next/headers';
-import enUS from '../../lib/locales/en-US.json';
-import ptBR from '../../lib/locales/pt-BR.json';
+import enUS from '../../../lib/locales/en-US.json';
+import ptBR from '../../../lib/locales/pt-BR.json';
 
 export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
