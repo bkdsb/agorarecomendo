@@ -56,11 +56,38 @@ export async function generateMetadata(): Promise<Metadata> {
   
   const content = metadata[locale];
   
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://agorarecomendo.com';
+  
   return {
-    title: content.title,
+    title: {
+      default: content.title,
+      template: `%s | ${content.title}`,
+    },
     description: content.description,
     applicationName: content.applicationName,
     keywords: content.keywords,
+    authors: [{ name: content.applicationName }],
+    creator: content.applicationName,
+    publisher: content.applicationName,
+    metadataBase: new URL(baseUrl),
+    alternates: {
+      canonical: '/',
+      languages: {
+        'en-US': '/en',
+        'pt-BR': '/pt',
+      },
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large' as const,
+        'max-snippet': -1,
+      },
+    },
     icons: {
       icon: [
         { url: '/favicon.ico' },
@@ -87,7 +114,12 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: content.title,
       description: content.description,
+      creator: '@agorarecomendo',
     },
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION,
+    },
+    category: locale === 'pt-BR' ? 'recomendações' : 'recommendations',
   };
 }
 

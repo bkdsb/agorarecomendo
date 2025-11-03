@@ -26,9 +26,7 @@ import { Markdown } from "tiptap-markdown";
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
 
-//TODO I am using cx here to get tailwind autocomplete working, idk if someone else can write a regex to just capture the class key in objects
 const aiHighlight = AIHighlight;
-// Placeholder do Novel: sem configuração (usa padrão)
 const placeholder = Placeholder;
 const tiptapLink = TiptapLink.configure({
   HTMLAttributes: {

@@ -10,6 +10,12 @@ const config = {
   // Garantir que a renderização seja estrita
   reactStrictMode: true,
   
+  // Enable compression for better performance
+  compress: true,
+  
+  // Optimize production builds
+  poweredByHeader: false,
+  
   // Silenciar logs verbosos do CLI
   logging: {
     fetches: {
@@ -25,6 +31,10 @@ const config = {
 
   // Configuração para permitir o carregamento de imagens de domínios externos
   images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
     remotePatterns: [
       // Domínio para Placeholders
       {

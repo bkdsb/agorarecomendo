@@ -24,6 +24,85 @@ interface Props {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// Generate metadata for SEO
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const cookieStore = await cookies();
+  const userLocale = ((cookieStore.get('locale')?.value) as 'en-US' | 'pt-BR') || 'en-US';
+  
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    include: { category: true, links: true, reviews: true },
+  });
+
+  if (!product) {
+    return {
+      title: 'Product Not Found',
+      description: 'The product you are looking for does not exist.',
+    };
+  }
+
+  const productAny = product as any;
+  const title = userLocale === 'pt-BR' && productAny.titlePtBr ? productAny.titlePtBr : product.title;
+  const summary = userLocale === 'pt-BR' && productAny.summaryPtBr ? productAny.summaryPtBr : product.summary;
+  const categoryName = userLocale === 'pt-BR' && productAny.category?.namePtBr
+    ? productAny.category.namePtBr
+    : product.category?.name;
+
+  const siteName = userLocale === 'pt-BR' ? 'AgoraRecomendo' : 'AR Recommends';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://agorarecomendo.com';
+  
+  // Calculate average rating
+  const avgRating = product.reviews && product.reviews.length > 0
+    ? product.reviews.reduce((sum: number, r: any) => sum + (Number(r.rating) || 0), 0) / product.reviews.length
+    : 0;
+
+  return {
+    title: `${title} | ${siteName}`,
+    description: summary || `${categoryName ? categoryName + ' - ' : ''}${title}`,
+    keywords: [
+      title,
+      categoryName,
+      ...(product.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+      'reviews',
+      'recommendations',
+      userLocale === 'pt-BR' ? 'recomendações' : 'product review',
+    ].filter(Boolean),
+    openGraph: {
+      title: title,
+      description: summary || `Check out our detailed review of ${title}`,
+      url: `${baseUrl}/produto/${slug}`,
+      siteName: siteName,
+      images: [
+        {
+          url: product.imageUrl || `${baseUrl}/window.svg`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      locale: userLocale,
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: title,
+      description: summary || `Check out our detailed review of ${title}`,
+      images: [product.imageUrl || `${baseUrl}/window.svg`],
+    },
+    alternates: {
+      canonical: `${baseUrl}/produto/${slug}`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large' as const,
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  };
+}
+
 export default async function ProductArticlePage({ params, searchParams }: Props) {
   const session = await getServerSession(authOptions);
   
@@ -119,10 +198,61 @@ export default async function ProductArticlePage({ params, searchParams }: Props
   if (reviewsDisplay.order === 'rating') reviewsOrdered.sort((a:any,b:any)=> (Number(b.rating)||0)-(Number(a.rating)||0));
   else reviewsOrdered.sort((a:any,b:any)=> new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime());
   const reviewsToShow = reviewsOrdered.slice(0, reviewsDisplay.max);
-  // Inline editor no artigo foi descontinuado
+  // Calculate average rating for structured data
+  const avgRating = product.reviews && product.reviews.length > 0
+    ? (product.reviews.reduce((sum: number, r: any) => sum + (Number(r.rating) || 0), 0) / product.reviews.length).toFixed(1)
+    : null;
+
+  // Generate JSON-LD structured data for SEO
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://agorarecomendo.com';
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": title,
+    "description": summary || title,
+    "image": product.imageUrl || `${baseUrl}/window.svg`,
+    "brand": {
+      "@type": "Brand",
+      "name": categoryName || "Product"
+    },
+    "offers": primaryLink ? {
+      "@type": "Offer",
+      "url": primaryLink,
+      "availability": "https://schema.org/InStock",
+      "priceCurrency": userLocale === 'pt-BR' ? "BRL" : "USD"
+    } : undefined,
+    "aggregateRating": avgRating ? {
+      "@type": "AggregateRating",
+      "ratingValue": avgRating,
+      "reviewCount": product.reviews.length,
+      "bestRating": "5",
+      "worstRating": "1"
+    } : undefined,
+    "review": product.reviews && product.reviews.length > 0 ? product.reviews.slice(0, 5).map((r: any) => ({
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": r.author || "Anonymous"
+      },
+      "datePublished": r.createdAt,
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": Number(r.rating) || 0,
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "reviewBody": r.content
+    })) : undefined
+  };
 
   return (
   <div className="relative overflow-x-hidden">
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      
       {/* Header principal reutilizado da Home, com atalho de edição quando logado */}
   <Header />
       {/* Fundo premium com gradientes e blur (parcialmente parallax via fixed bg) */}

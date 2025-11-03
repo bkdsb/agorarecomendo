@@ -192,6 +192,8 @@
   "settings.usefulLinks": "Links Úteis",
   "settings.github": "GitHub",
   "settings.documentation": "Documentação",
+  "settings.dangerZone": "Zona de Perigo",
+  "settings.logoutDescription": "Saia da sua conta e retorne para a página inicial.",
   "dashboard.publishedProducts": "Produtos Publicados",
   "dashboard.affiliateClicks30d": "Cliques de Afiliado (30 dias)",
   "dashboard.activeBanners": "Banners Ativos",

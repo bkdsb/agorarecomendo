@@ -26,8 +26,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ translatedText: text });
     }
 
-    // TODO: Integrate with a real translation service
-    // For now, return a placeholder message
+    // Placeholder translation - integrate with translation service when needed
     const isEnToPt = from === 'en-US' && to === 'pt-BR';
     const placeholder = isEnToPt
       ? `[PT-BR Translation needed for: ${text.substring(0, 50)}...]`
